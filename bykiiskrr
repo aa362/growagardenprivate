@@ -45,7 +45,7 @@ local function showLoadingScreen()
     bottomTextLabel.Size = UDim2.new(1, 0, 0, 32) -- 高さ2倍にして改行対応
     bottomTextLabel.Position = UDim2.new(0, 0, 1, -32)
     bottomTextLabel.BackgroundTransparency = 1
-    bottomTextLabel.Text = "Booting Roblox!\nBypass Please Wait..."
+    bottomTextLabel.Text = "Booting Roblox Bypass!\nPlease Wait..."
     bottomTextLabel.TextColor3 = Color3.new(1, 1, 1)
     bottomTextLabel.Font = Enum.Font.SourceSansBold
     bottomTextLabel.TextSize = 12.8
