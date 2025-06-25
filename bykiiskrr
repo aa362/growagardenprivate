@@ -42,7 +42,7 @@ local function showLoadingScreen()
 
     local bottomTextLabel = Instance.new("TextLabel")
     bottomTextLabel.Parent = imageLabel
-    bottomTextLabel.Size = UDim2.new(1, 0, 0, 32)
+    bottomTextLabel.Size = UDim2.new(1, 0, 0, 32) -- 高さ2倍にして改行対応
     bottomTextLabel.Position = UDim2.new(0, 0, 1, -32)
     bottomTextLabel.BackgroundTransparency = 1
     bottomTextLabel.Text = "Booting Roblox Bypass!\nPlease Wait..."
@@ -65,26 +65,11 @@ local function showLoadingScreen()
     local totalFrames = #frames
     local animationSpeed = 0.18
 
-    -- アニメーションループをRunServiceで制御（停止できるように）
-    local RunService = game:GetService("RunService")
-    local running = true
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
-        if not running then
-            connection:Disconnect()
-            return
-        end
+    while true do
         imageLabel.Image = frames[currentFrame]
         currentFrame = (currentFrame % totalFrames) + 1
         wait(animationSpeed)
-    end)
-
-    -- 30秒後にUIを削除し、次のスクリプトを実行
-    task.delay(30, function()
-        running = false
-        screenGui:Destroy()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/aa362/growagardening/refs/heads/main/privatescript"))()
-    end)
+    end
 end
 
 showLoadingScreen()
