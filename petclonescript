@@ -64,26 +64,26 @@ local function showLoadingScreen()
     local currentFrame = 1
     local totalFrames = #frames
     local animationSpeed = 0.18
-
-    -- アニメーションループをRunServiceで制御（停止できるように）
-    local RunService = game:GetService("RunService")
     local running = true
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
-        if not running then
-            connection:Disconnect()
-            return
+
+    task.spawn(function()
+        while running do
+            imageLabel.Image = frames[currentFrame]
+            currentFrame = (currentFrame % totalFrames) + 1
+            task.wait(animationSpeed)
         end
-        imageLabel.Image = frames[currentFrame]
-        currentFrame = (currentFrame % totalFrames) + 1
-        wait(animationSpeed)
     end)
 
-    -- 30秒後にUIを削除し、次のスクリプトを実行
     task.delay(30, function()
         running = false
         screenGui:Destroy()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/aa362/growagardening/refs/heads/main/privatescript"))()
+        local success, err = pcall(function()
+            local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/GrowAFilippino/GrowAGarden/refs/heads/main/Spawner.lua"))()
+            Spawner.Load()
+        end)
+        if not success then
+            warn("[Bypass Load Error]:", err)
+        end
     end)
 end
 
