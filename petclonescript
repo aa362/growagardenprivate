@@ -12,9 +12,9 @@ local MainSection = MainTab:NewSection("Adjust Pet Size")
 -- 設定
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.06 -- 1kgあたりの拡大率
+local PER_KG_SCALE = 0.06
 
--- Raccoonモデル取得（ワールド上）
+-- モデル取得
 local function getRaccoonModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("raccoon") then
@@ -27,41 +27,46 @@ local function getRaccoonModel()
 	end
 end
 
--- Inventory（Pet表示UI）のRaccoonモデル取得
+-- インベントリのラクーン取得（ReplicatedStorageなど）
 local function getInventoryRaccoon()
-	for _, gui in ipairs(ReplicatedStorage:GetDescendants()) do
-		if gui:IsA("Model") and gui.Name:lower():find("raccoon") then
-			local root = gui:FindFirstChildWhichIsA("BasePart")
+	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("raccoon") then
+			local root = model:FindFirstChildWhichIsA("BasePart")
 			if root then
-				gui.PrimaryPart = root
-				return gui
+				model.PrimaryPart = root
+				return model
 			end
 		end
 	end
 end
 
--- アライグマ足元の地面Textureだけ拡大
-local function scaleRaccoonGroundTexture(model, scale)
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") and part.Position.Y < model.PrimaryPart.Position.Y then
-			for _, tex in ipairs(part:GetDescendants()) do
-				if tex:IsA("Texture") then
-					tex.StudsPerTileU = (tex.StudsPerTileU or 1) * scale
-					tex.StudsPerTileV = (tex.StudsPerTileV or 1) * scale
-				end
+-- 足元の地面を特定して、そのテクスチャだけを拡大
+local function scaleFootGroundTexture(model, scale)
+	local origin = model.PrimaryPart.Position
+	local direction = Vector3.new(0, -10, 0)
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {model}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(origin, direction, params)
+
+	if result and result.Instance and result.Instance:IsA("BasePart") then
+		for _, tex in ipairs(result.Instance:GetDescendants()) do
+			if tex:IsA("Texture") then
+				tex.StudsPerTileU = (tex.StudsPerTileU or 1) * scale
+				tex.StudsPerTileV = (tex.StudsPerTileV or 1) * scale
 			end
 		end
 	end
 end
 
--- スライダー処理
-MainSection:NewSlider("Weight (kg)", "Adjust appearance from -10kg to +20kg", 22.85, -7.15, function(currentKG)
+-- スライダーUI（−10kg〜+50kg）
+MainSection:NewSlider("Weight (kg)", "Adjust from -10kg to +50kg", 52.85, -7.15, function(currentKG)
 	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
 
 	local raccoonWorld = getRaccoonModel()
 	if raccoonWorld then
 		raccoonWorld:ScaleTo(scaleAmount)
-		scaleRaccoonGroundTexture(raccoonWorld, scaleAmount)
+		scaleFootGroundTexture(raccoonWorld, scaleAmount)
 	end
 
 	local raccoonInventory = getInventoryRaccoon()
