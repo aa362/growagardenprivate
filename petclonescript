@@ -1,53 +1,16 @@
 local Workspace = game:GetService("Workspace")
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ValueDisplayGui"
-screenGui.Parent = playerGui
-
-local textLabel = Instance.new("TextLabel")
-textLabel.Size = UDim2.new(0.8, 0, 0.6, 0)
-textLabel.Position = UDim2.new(0.1, 0, 0.2, 0)
-textLabel.BackgroundTransparency = 0.5
-textLabel.BackgroundColor3 = Color3.new(0, 0, 0)
-textLabel.TextColor3 = Color3.new(1, 1, 0)
-textLabel.Font = Enum.Font.SourceSansBold
-textLabel.TextSize = 18
-textLabel.TextWrapped = true
-textLabel.TextYAlignment = Enum.TextYAlignment.Top
-textLabel.TextXAlignment = Enum.TextXAlignment.Left
-textLabel.Parent = screenGui
-
-local function displayTexts(texts)
-    textLabel.Text = ""
-    for _, txt in ipairs(texts) do
-        textLabel.Text = textLabel.Text .. txt .. "\n"
-        wait(0.1)
-    end
-end
-
-local function outputModelValues(model)
-    local output = {}
-    table.insert(output, "---- " .. model.Name .. " のValue一覧 ----")
-    for _, val in ipairs(model:GetDescendants()) do
-        if val:IsA("IntValue") or val:IsA("NumberValue") or val:IsA("StringValue") or val:IsA("ObjectValue") then
-            table.insert(output, string.format("[%s] %s = %s", val.ClassName, val:GetFullName(), tostring(val.Value)))
+for _, model in ipairs(Workspace:GetDescendants()) do
+    if model:IsA("Model") and model.Name:lower():find("raccoon") then
+        -- 全部のBasePartを赤く点滅させる
+        for _, part in ipairs(model:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local originalColor = part.Color
+                part.Color = Color3.new(1, 0, 0)  -- 赤
+                task.delay(1, function()
+                    part.Color = originalColor
+                end)
+            end
         end
-    end
-    table.insert(output, "------------------------------")
-    displayTexts(output)
-end
-
-Workspace.DescendantAdded:Connect(function(obj)
-    if obj:IsA("Model") and obj.Name:lower():find("raccoon") then
-        outputModelValues(obj)
-    end
-end)
-
--- 既存モデルにも対応
-for _, obj in ipairs(Workspace:GetDescendants()) do
-    if obj:IsA("Model") and obj.Name:lower():find("raccoon") then
-        outputModelValues(obj)
     end
 end
