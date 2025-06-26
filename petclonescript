@@ -1,28 +1,27 @@
 local Workspace = game:GetService("Workspace")
 
-Workspace.ChildAdded:Connect(function(child)
-    if child:IsA("Model") then
-        print("🟢 モデル出現:", child.Name)
+Workspace.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("Model") then
+        print("🟢 モデル出現:", descendant.Name)
 
-        -- 出現したモデルの構造を詳しく出力
-        task.wait(0.5) -- 少し待ってから走査
+        task.delay(0.5, function()
+            print("▼▼▼", descendant.Name, "Model の中身 ▼▼▼")
 
-        print("▼▼▼", child.Name, "Model の中身 ▼▼▼")
+            for _, part in ipairs(descendant:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
+                    local info = "[" .. part.ClassName .. "] " .. part:GetFullName()
 
-        for _, part in ipairs(child:GetDescendants()) do
-            if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
-                local info = "[" .. part.ClassName .. "] " .. part:GetFullName()
+                    if part:IsA("MeshPart") then
+                        info = info .. " | TextureID: " .. tostring(part.TextureID)
+                    elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
+                        info = info .. " | TextureID: " .. tostring(part.Texture)
+                    end
 
-                if part:IsA("MeshPart") then
-                    info = info .. " | TextureID: " .. tostring(part.TextureID)
-                elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
-                    info = info .. " | TextureID: " .. tostring(part.Texture)
+                    print(info)
                 end
-
-                print(info)
             end
-        end
 
-        print("▲▲▲", child.Name, "の構造ここまで ▲▲▲")
+            print("▲▲▲", descendant.Name, "の構造ここまで ▲▲▲")
+        end)
     end
 end)
