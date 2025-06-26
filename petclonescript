@@ -1,15 +1,11 @@
 local Workspace = game:GetService("Workspace")
+local SCALE = 1.3 -- 5kg相当のサイズアップ倍率（調整可能）
 
 for _, model in ipairs(Workspace:GetDescendants()) do
     if model:IsA("Model") and model.Name:lower():find("raccoon") then
-        -- 全部のBasePartを赤く点滅させる
         for _, part in ipairs(model:GetDescendants()) do
             if part:IsA("BasePart") then
-                local originalColor = part.Color
-                part.Color = Color3.new(1, 0, 0)  -- 赤
-                task.delay(1, function()
-                    part.Color = originalColor
-                end)
+                part.Size = part.Size * SCALE
             end
         end
     end
