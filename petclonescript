@@ -1,17 +1,40 @@
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local SCALE = 1.3
+local player = Players.LocalPlayer
 
-for _, model in ipairs(Workspace:GetDescendants()) do
-    if model:IsA("Model") and model.Name:lower():find("raccoon") then
-        if model.PrimaryPart then
-            model:ScaleTo(SCALE)
-        else
-            -- PrimaryPart が設定されていない場合、自動設定してから拡大
-            local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-            if root then
-                model.PrimaryPart = root
-                model:ScaleTo(SCALE)
-            end
-        end
-    end
+-- UIライブラリ読み込み（Kavo UI）
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Raccoon Size Controller", "Midnight")
+local MainTab = Window:NewTab("Size")
+local MainSection = MainTab:NewSection("ペットの重さを調整（見た目のみ）")
+
+-- アライグマモデル取得（最初の1体のみ対象）
+local function getRaccoonModel()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("raccoon") then
+			if model.PrimaryPart then
+				return model
+			else
+				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+				if root then
+					model.PrimaryPart = root
+					return model
+				end
+			end
+		end
+	end
 end
+
+-- 基準スケール（2.85kg = 約1.0倍）
+local BASE_KG = 2.85
+local BASE_SCALE = 1.0
+local PER_KG_SCALE = 0.06  -- 1kgごとに0.06スケール増加（調整OK）
+
+-- スライダー作成
+MainSection:NewSlider("重さ(kg)", "0.5〜10.0kg", 10, 0.5, function(currentKG)
+	local model = getRaccoonModel()
+	if model then
+		local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
+		model:ScaleTo(scaleAmount)
+	end
+end)
