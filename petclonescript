@@ -1,46 +1,36 @@
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local player = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
 
--- 目標値
-local TARGET_NAME = "Raccoon"
-local TARGET_KG = "2.85"
-local TARGET_AGE = "24"
-local SCALE = 1.3
-
--- ラベルから対象のペットか判断
-local function isMatchingPetByLabel(model)
-	for _, desc in ipairs(model:GetDescendants()) do
-		if desc:IsA("TextLabel") and desc.Text and desc.Text:find(TARGET_KG) and desc.Text:find("Age "..TARGET_AGE) then
-			return true
-		end
-	end
-	return false
+local function sendToChat(text)
+    StarterGui:SetCore("ChatMakeSystemMessage", {
+        Text = text,
+        Color = Color3.fromRGB(255, 255, 0),
+        Font = Enum.Font.SourceSansBold,
+        FontSize = Enum.FontSize.Size18,
+    })
 end
 
--- 拡大処理
-local function scaleModel(model)
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Size *= SCALE
-			part.Position = part.Position
-		end
-	end
+local function outputModelValues(model)
+    sendToChat("---- " .. model.Name .. " のValue一覧 ----")
+    for _, val in ipairs(model:GetDescendants()) do
+        if val:IsA("IntValue") or val:IsA("NumberValue") or val:IsA("StringValue") or val:IsA("ObjectValue") then
+            local msg = string.format("[%s] %s = %s", val.ClassName, val:GetFullName(), tostring(val.Value))
+            sendToChat(msg)
+            task.wait(0.1)  -- チャットが流れやすいように少し待つ
+        end
+    end
+    sendToChat("------------------------------")
 end
 
--- 既存のものも探す
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if model:IsA("Model") and model.Name:find(TARGET_NAME) and isMatchingPetByLabel(model) then
-		scaleModel(model)
-	end
-end
-
--- 新しく出たものも検知
 Workspace.DescendantAdded:Connect(function(obj)
-	if obj:IsA("Model") and obj.Name:find(TARGET_NAME) then
-		task.wait(0.3)
-		if isMatchingPetByLabel(obj) then
-			scaleModel(obj)
-		end
-	end
+    if obj:IsA("Model") and obj.Name:lower():find("raccoon") then
+        outputModelValues(obj)
+    end
 end)
+
+-- 既にあるモデルも出力
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj:IsA("Model") and obj.Name:lower():find("raccoon") then
+        outputModelValues(obj)
+    end
+end
