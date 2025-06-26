@@ -1,24 +1,57 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-
 local player = Players.LocalPlayer
-local PET_NAME = "Raccoon" -- または "Fox", "Bear" など
 
--- サイズ倍率（5kgぶん大きく）
-local SCALE = 1.3
+-- 対象の情報
+local TARGET_NAME = "Raccoon"
+local TARGET_KG = 2.85
+local TARGET_AGE = 24
+local SCALE = 1.3 -- 5kg相当（好みに応じて調整）
 
--- 自分が持つペットだけを対象にする
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if model:IsA("Model") and string.find(model.Name, PET_NAME) then
-		local ownerTag = model:FindFirstChild("Owner") or model:FindFirstChild("OwnerValue")
-		if ownerTag and ownerTag:IsA("ObjectValue") and ownerTag.Value == player then
-			-- スケーリング処理
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.Size *= SCALE
-					part.Position = part.Position -- 位置更新
-				end
-			end
+-- 比較用丸め関数（小数誤差対策）
+local function round(n, decimals)
+	return tonumber(string.format("%." .. decimals .. "f", n))
+end
+
+-- 指定されたモデルを拡大する
+local function scaleModel(model)
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Size *= SCALE
+			part.Position = part.Position
 		end
 	end
 end
+
+-- 条件一致するか確認
+local function isTargetPet(model)
+	if not model:IsA("Model") then return false end
+	if not string.find(model.Name, TARGET_NAME) then return false end
+
+	local owner = model:FindFirstChild("Owner") or model:FindFirstChild("OwnerValue")
+	local kg = model:FindFirstChild("KG") or model:FindFirstChild("Weight")
+	local age = model:FindFirstChild("Age")
+
+	if owner and owner:IsA("ObjectValue") and owner.Value == player
+	and kg and tonumber(round(kg.Value, 2)) == TARGET_KG
+	and age and tonumber(age.Value) == TARGET_AGE then
+		return true
+	end
+
+	return false
+end
+
+-- すでに存在するペットも探す
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if isTargetPet(model) then
+		scaleModel(model)
+	end
+end
+
+-- 新しく出現した場合も監視
+Workspace.DescendantAdded:Connect(function(obj)
+	if isTargetPet(obj) then
+		task.wait(0.5)
+		scaleModel(obj)
+	end
+end)
