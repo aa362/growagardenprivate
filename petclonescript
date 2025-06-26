@@ -1,35 +1,60 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
--- 黒く塗る関数
-local function paintBlack(model)
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Color = Color3.new(0, 0, 0)
-			part.Material = Enum.Material.SmoothPlastic
-			part.Transparency = 0
-			if part:IsA("MeshPart") then
-				part.TextureID = ""
+-- 黒くする処理
+local function deepBlacken(model)
+	for _, obj in ipairs(model:GetDescendants()) do
+		-- 色のある部品
+		if obj:IsA("BasePart") then
+			obj.Color = Color3.new(0, 0, 0)
+			obj.Material = Enum.Material.SmoothPlastic
+			obj.Transparency = 0
+			if obj:IsA("MeshPart") then
+				obj.TextureID = ""
 			end
-		elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
-			part:Destroy()
+		end
+
+		-- テクスチャ・画像は削除
+		if obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("SurfaceAppearance") then
+			obj:Destroy()
+		end
+
+		-- メッシュのテクスチャも消す
+		if obj:IsA("SpecialMesh") then
+			obj.TextureId = ""
+		end
+
+		-- アクセサリのHandleも黒くする
+		if obj:IsA("Accessory") then
+			local handle = obj:FindFirstChild("Handle")
+			if handle and handle:IsA("BasePart") then
+				handle.Color = Color3.new(0, 0, 0)
+				handle.TextureID = ""
+				for _, sub in ipairs(handle:GetDescendants()) do
+					if sub:IsA("Decal") or sub:IsA("Texture") or sub:IsA("SurfaceAppearance") then
+						sub:Destroy()
+					end
+					if sub:IsA("SpecialMesh") then
+						sub.TextureId = ""
+					end
+				end
+			end
 		end
 	end
 end
 
--- すでに存在してるやつもチェック
+-- 初期存在分も処理
 for _, model in ipairs(Workspace:GetDescendants()) do
 	if model:IsA("Model") and string.find(model.Name:lower(), "raccoon") then
-		paintBlack(model)
+		deepBlacken(model)
 	end
 end
 
--- 新しく出現したやつも検出
+-- 新たに出現したモデルも処理
 Workspace.DescendantAdded:Connect(function(obj)
 	if obj:IsA("Model") and string.find(obj.Name:lower(), "raccoon") then
 		task.wait(0.5)
-		paintBlack(obj)
+		deepBlacken(obj)
 	end
 end)
