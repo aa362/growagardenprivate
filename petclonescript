@@ -1,60 +1,27 @@
 local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
 
--- 黒くする処理
-local function deepBlacken(model)
-	for _, obj in ipairs(model:GetDescendants()) do
-		-- 色のある部品
-		if obj:IsA("BasePart") then
-			obj.Color = Color3.new(0, 0, 0)
-			obj.Material = Enum.Material.SmoothPlastic
-			obj.Transparency = 0
-			if obj:IsA("MeshPart") then
-				obj.TextureID = ""
-			end
-		end
-
-		-- テクスチャ・画像は削除
-		if obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("SurfaceAppearance") then
-			obj:Destroy()
-		end
-
-		-- メッシュのテクスチャも消す
-		if obj:IsA("SpecialMesh") then
-			obj.TextureId = ""
-		end
-
-		-- アクセサリのHandleも黒くする
-		if obj:IsA("Accessory") then
-			local handle = obj:FindFirstChild("Handle")
-			if handle and handle:IsA("BasePart") then
-				handle.Color = Color3.new(0, 0, 0)
-				handle.TextureID = ""
-				for _, sub in ipairs(handle:GetDescendants()) do
-					if sub:IsA("Decal") or sub:IsA("Texture") or sub:IsA("SurfaceAppearance") then
-						sub:Destroy()
-					end
-					if sub:IsA("SpecialMesh") then
-						sub.TextureId = ""
-					end
-				end
-			end
-		end
-	end
+local function printToChat(text)
+	StarterGui:SetCore("ChatMakeSystemMessage", {
+		Text = text,
+		Color = Color3.fromRGB(255, 255, 0),
+		Font = Enum.Font.SourceSansBold,
+		FontSize = Enum.FontSize.Size18
+	})
 end
 
--- 初期存在分も処理
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if model:IsA("Model") and string.find(model.Name:lower(), "raccoon") then
-		deepBlacken(model)
-	end
-end
-
--- 新たに出現したモデルも処理
+-- 特定のモデルが現れたら全て出力
 Workspace.DescendantAdded:Connect(function(obj)
 	if obj:IsA("Model") and string.find(obj.Name:lower(), "raccoon") then
 		task.wait(0.5)
-		deepBlacken(obj)
+		printToChat("🔍 構造解析開始: " .. obj.Name)
+		for _, part in ipairs(obj:GetDescendants()) do
+			if part:IsA("Instance") then
+				local path = part:GetFullName()
+				local class = part.ClassName
+				local info = "[" .. class .. "] " .. path
+				printToChat(info)
+			end
+		end
 	end
 end)
