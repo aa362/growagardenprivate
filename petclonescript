@@ -2,13 +2,13 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 
--- UIライブラリ読み込み（Kavo UI）
+-- Load Kavo UI
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Raccoon Size Controller", "Midnight")
-local MainTab = Window:NewTab("Size")
-local MainSection = MainTab:NewSection("ペットの重さを調整（見た目のみ）")
+local Window = Library.CreateLib("Raccoon Appearance Size", "Midnight")
+local MainTab = Window:NewTab("Scale")
+local MainSection = MainTab:NewSection("Adjust Pet Size")
 
--- アライグマモデル取得（最初の1体のみ対象）
+-- Get raccoon model
 local function getRaccoonModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("raccoon") then
@@ -25,16 +25,34 @@ local function getRaccoonModel()
 	end
 end
 
--- 基準スケール（2.85kg = 約1.0倍）
+-- Adjust ground texture scale
+local function scaleGroundTextures(scaleFactor)
+	for _, part in ipairs(Workspace:GetDescendants()) do
+		if part:IsA("BasePart") then
+			for _, tex in ipairs(part:GetDescendants()) do
+				if tex:IsA("Texture") then
+					-- Adjust tile size to match new scale
+					local u = tex.StudsPerTileU or 1
+					local v = tex.StudsPerTileV or 1
+					tex.StudsPerTileU = u * scaleFactor
+					tex.StudsPerTileV = v * scaleFactor
+				end
+			end
+		end
+	end
+end
+
+-- Scale constants
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.06  -- 1kgごとに0.06スケール増加（調整OK）
+local PER_KG_SCALE = 0.06 -- each 1kg changes size by this amount
 
--- スライダー作成
-MainSection:NewSlider("重さ(kg)", "0.5〜10.0kg", 10, 0.5, function(currentKG)
+-- Slider UI
+MainSection:NewSlider("Weight (kg)", "Scale from -10kg to +10kg", 12.85, -7.15, function(currentKG)
 	local model = getRaccoonModel()
 	if model then
 		local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
 		model:ScaleTo(scaleAmount)
+		scaleGroundTextures(scaleAmount)
 	end
 end)
