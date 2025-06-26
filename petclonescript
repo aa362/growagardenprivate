@@ -1,27 +1,35 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
-Workspace.DescendantAdded:Connect(function(descendant)
-    if descendant:IsA("Model") then
-        print("🟢 モデル出現:", descendant.Name)
+-- 黒く塗る関数
+local function paintBlack(model)
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Color = Color3.new(0, 0, 0)
+			part.Material = Enum.Material.SmoothPlastic
+			part.Transparency = 0
+			if part:IsA("MeshPart") then
+				part.TextureID = ""
+			end
+		elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
+			part:Destroy()
+		end
+	end
+end
 
-        task.delay(0.5, function()
-            print("▼▼▼", descendant.Name, "Model の中身 ▼▼▼")
+-- すでに存在してるやつもチェック
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if model:IsA("Model") and string.find(model.Name:lower(), "raccoon") then
+		paintBlack(model)
+	end
+end
 
-            for _, part in ipairs(descendant:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
-                    local info = "[" .. part.ClassName .. "] " .. part:GetFullName()
-
-                    if part:IsA("MeshPart") then
-                        info = info .. " | TextureID: " .. tostring(part.TextureID)
-                    elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
-                        info = info .. " | TextureID: " .. tostring(part.Texture)
-                    end
-
-                    print(info)
-                end
-            end
-
-            print("▲▲▲", descendant.Name, "の構造ここまで ▲▲▲")
-        end)
-    end
+-- 新しく出現したやつも検出
+Workspace.DescendantAdded:Connect(function(obj)
+	if obj:IsA("Model") and string.find(obj.Name:lower(), "raccoon") then
+		task.wait(0.5)
+		paintBlack(obj)
+	end
 end)
