@@ -1,33 +1,25 @@
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local player = Players.LocalPlayer
 
 Workspace.ChildAdded:Connect(function(child)
     if child:IsA("Model") and child.Name == "Raccoon" then
         task.wait(0.5)
 
-        local infoList = {}
+        print("▼▼▼ Raccoon Model 内容 ▼▼▼")
 
-        for _, descendant in ipairs(child:GetDescendants()) do
-            if descendant:IsA("BasePart") or descendant:IsA("Decal") or descendant:IsA("Texture") or descendant:IsA("SpecialMesh") then
-                local line = string.format("[%s] %s", descendant.ClassName, descendant.Name)
-                if descendant:IsA("MeshPart") then
-                    line = line .. " | TextureID: " .. tostring(descendant.TextureID)
-                elseif descendant:IsA("Decal") or descendant:IsA("Texture") or descendant:IsA("SpecialMesh") then
-                    line = line .. " | TextureID: " .. tostring(descendant.Texture)
+        for _, part in ipairs(child:GetDescendants()) do
+            if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
+                local info = "[" .. part.ClassName .. "] " .. part:GetFullName()
+
+                if part:IsA("MeshPart") then
+                    info = info .. " | TextureID: " .. tostring(part.TextureID)
+                elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
+                    info = info .. " | TextureID: " .. tostring(part.Texture)
                 end
-                table.insert(infoList, line)
+
+                print(info)
             end
         end
 
-        for _, line in ipairs(infoList) do
-            game.StarterGui:SetCore("ChatMakeSystemMessage", {
-                Text = line,
-                Color = Color3.fromRGB(255, 255, 0),
-                Font = Enum.Font.SourceSansBold,
-                FontSize = Enum.FontSize.Size18
-            })
-            wait(0.1)
-        end
+        print("▲▲▲ ここまで ▲▲▲")
     end
 end)
