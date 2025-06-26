@@ -1,11 +1,16 @@
 local Workspace = game:GetService("Workspace")
-local SCALE = 1.3 -- 5kg相当のサイズアップ倍率（調整可能）
+local SCALE = 1.3
 
 for _, model in ipairs(Workspace:GetDescendants()) do
     if model:IsA("Model") and model.Name:lower():find("raccoon") then
-        for _, part in ipairs(model:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Size = part.Size * SCALE
+        if model.PrimaryPart then
+            model:ScaleTo(SCALE)
+        else
+            -- PrimaryPart が設定されていない場合、自動設定してから拡大
+            local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+            if root then
+                model.PrimaryPart = root
+                model:ScaleTo(SCALE)
             end
         end
     end
