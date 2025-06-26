@@ -1,27 +1,24 @@
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local StarterGui = game:GetService("StarterGui")
 
-local function printToChat(text)
-	StarterGui:SetCore("ChatMakeSystemMessage", {
-		Text = text,
-		Color = Color3.fromRGB(255, 255, 0),
-		Font = Enum.Font.SourceSansBold,
-		FontSize = Enum.FontSize.Size18
-	})
-end
+local player = Players.LocalPlayer
+local PET_NAME = "Raccoon" -- または "Fox", "Bear" など
 
--- 特定のモデルが現れたら全て出力
-Workspace.DescendantAdded:Connect(function(obj)
-	if obj:IsA("Model") and string.find(obj.Name:lower(), "raccoon") then
-		task.wait(0.5)
-		printToChat("🔍 構造解析開始: " .. obj.Name)
-		for _, part in ipairs(obj:GetDescendants()) do
-			if part:IsA("Instance") then
-				local path = part:GetFullName()
-				local class = part.ClassName
-				local info = "[" .. class .. "] " .. path
-				printToChat(info)
+-- サイズ倍率（5kgぶん大きく）
+local SCALE = 1.3
+
+-- 自分が持つペットだけを対象にする
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if model:IsA("Model") and string.find(model.Name, PET_NAME) then
+		local ownerTag = model:FindFirstChild("Owner") or model:FindFirstChild("OwnerValue")
+		if ownerTag and ownerTag:IsA("ObjectValue") and ownerTag.Value == player then
+			-- スケーリング処理
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.Size *= SCALE
+					part.Position = part.Position -- 位置更新
+				end
 			end
 		end
 	end
-end)
+end
