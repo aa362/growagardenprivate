@@ -1,90 +1,31 @@
-local function showLoadingScreen()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
 
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "LoadingScreenGui"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = playerGui
+-- アライグマのモデルがスポーンするたびに適用
+Workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and child.Name == "Raccoon" then
+        -- 少し待ってから実行（モデルが完全にロードされるのを待つ）
+        task.wait(0.5)
 
-    local imageLabel = Instance.new("ImageLabel")
-    imageLabel.Parent = screenGui
-    imageLabel.BackgroundTransparency = 1
-    imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-    imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-    imageLabel.Size = UDim2.new(0, 200, 0, 144)
-    imageLabel.ScaleType = Enum.ScaleType.Stretch
-    imageLabel.ImageTransparency = 0.3
+        for _, part in ipairs(child:GetDescendants()) do
+            -- 色を黒に変更（Part, MeshPart, Union など）
+            if part:IsA("BasePart") then
+                part.Color = Color3.new(0, 0, 0)
+                part.Material = Enum.Material.SmoothPlastic
+                part.Transparency = 0
+                part.Reflectance = 0
 
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(0, 16)
-    uiCorner.Parent = imageLabel
+                -- テクスチャがある場合は除去
+                if part:IsA("MeshPart") then
+                    part.TextureID = ""
+                end
+            end
 
-    local uiStroke = Instance.new("UIStroke")
-    uiStroke.Thickness = 1.6
-    uiStroke.Color = Color3.new(1, 1, 1)
-    uiStroke.Parent = imageLabel
-    uiStroke.Transparency = 0.7
-
-    local topTextLabel = Instance.new("TextLabel")
-    topTextLabel.Parent = imageLabel
-    topTextLabel.Size = UDim2.new(1, 0, 0, 16)
-    topTextLabel.Position = UDim2.new(0, 0, 0, 4)
-    topTextLabel.BackgroundTransparency = 1
-    topTextLabel.Text = "Roblox Bypass ver 3.0.0"
-    topTextLabel.TextColor3 = Color3.new(1, 1, 1)
-    topTextLabel.Font = Enum.Font.SourceSansBold
-    topTextLabel.TextSize = 12.8
-    topTextLabel.TextScaled = false
-    topTextLabel.TextStrokeTransparency = 0.7
-    topTextLabel.TextYAlignment = Enum.TextYAlignment.Center
-
-    local bottomTextLabel = Instance.new("TextLabel")
-    bottomTextLabel.Parent = imageLabel
-    bottomTextLabel.Size = UDim2.new(1, 0, 0, 32)
-    bottomTextLabel.Position = UDim2.new(0, 0, 1, -32)
-    bottomTextLabel.BackgroundTransparency = 1
-    bottomTextLabel.Text = "Booting Roblox!\nBypass Please Wait..."
-    bottomTextLabel.TextColor3 = Color3.new(1, 1, 1)
-    bottomTextLabel.Font = Enum.Font.SourceSansBold
-    bottomTextLabel.TextSize = 12.8
-    bottomTextLabel.TextScaled = false
-    bottomTextLabel.TextStrokeTransparency = 0.7
-    bottomTextLabel.TextYAlignment = Enum.TextYAlignment.Top
-    bottomTextLabel.TextXAlignment = Enum.TextXAlignment.Center
-
-    local frames = {
-        "rbxassetid://93375732343385",
-        "rbxassetid://86566599919313",
-        "rbxassetid://79233383622582",
-        "rbxassetid://93361738683333",
-    }
-
-    local currentFrame = 1
-    local totalFrames = #frames
-    local animationSpeed = 0.18
-    local running = true
-
-    task.spawn(function()
-        while running do
-            imageLabel.Image = frames[currentFrame]
-            currentFrame = (currentFrame % totalFrames) + 1
-            task.wait(animationSpeed)
+            -- デカールやTextureを削除（顔など）
+            if part:IsA("Decal") or part:IsA("Texture") then
+                part:Destroy()
+            end
         end
-    end)
-
-    task.delay(30, function()
-        running = false
-        screenGui:Destroy()
-        local success, err = pcall(function()
-            local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/GrowAFilippino/GrowAGarden/refs/heads/main/Spawner.lua"))()
-            Spawner.Load()
-        end)
-        if not success then
-            warn("[Bypass Load Error]:", err)
-        end
-    end)
-end
-
-showLoadingScreen()
+    end
+end)
