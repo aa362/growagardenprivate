@@ -1,10 +1,13 @@
 local Workspace = game:GetService("Workspace")
 
 Workspace.ChildAdded:Connect(function(child)
-    if child:IsA("Model") and child.Name == "Raccoon" then
-        task.wait(0.5)
+    if child:IsA("Model") then
+        print("🟢 モデル出現:", child.Name)
 
-        print("▼▼▼ Raccoon Model 内容 ▼▼▼")
+        -- 出現したモデルの構造を詳しく出力
+        task.wait(0.5) -- 少し待ってから走査
+
+        print("▼▼▼", child.Name, "Model の中身 ▼▼▼")
 
         for _, part in ipairs(child:GetDescendants()) do
             if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") or part:IsA("SpecialMesh") then
@@ -20,6 +23,6 @@ Workspace.ChildAdded:Connect(function(child)
             end
         end
 
-        print("▲▲▲ ここまで ▲▲▲")
+        print("▲▲▲", child.Name, "の構造ここまで ▲▲▲")
     end
 end)
