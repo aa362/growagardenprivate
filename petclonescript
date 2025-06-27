@@ -6,14 +6,14 @@ local player = Players.LocalPlayer
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Octopus Appearance", "Midnight")
 local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Adjust Octopus")
+local MainSection = MainTab:NewSection("Pet Size Changer")
 
 -- 定数
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
 local PER_KG_SCALE = 0.25
-local MIN_KG = -10
-local MAX_KG = 160
+local MIN_KG = 2.85
+local MAX_KG = 100
 
 -- 現在のオフセット
 local currentOffsetKG = 0
