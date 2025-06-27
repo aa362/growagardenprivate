@@ -4,21 +4,24 @@ local player = Players.LocalPlayer
 
 -- UIライブラリ読み込み
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Appearance", "Midnight")
+local Window = Library.CreateLib("Pet Size Changer", "Midnight")
 local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Pet Size Changer")
+local MainSection = MainTab:NewSection("Pet Size Age")
 
 -- 定数
-local BASE_KG = 20
+local BASE_KG = 20           -- デフォルト重量
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 2.0
-local MIN_KG = 2.85
-local MAX_KG = 100
+local PER_KG_SCALE = 2.0     -- 1kgでどれくらい拡大するか
+local MIN_KG = 2          -- 最小体重
+local MAX_KG = 100           -- 最大体重
 
--- 現在のオフセット
+local MIN_OFFSET_KG = MIN_KG - BASE_KG -- 2.85 - 20 = -17.15
+local MAX_OFFSET_KG = MAX_KG - BASE_KG -- 100 - 20 = 80
+
+-- 現在のオフセット（0＝20kgからスタート）
 local currentOffsetKG = 0
 
--- タコモデルを取得
+-- タコモデル取得
 local function getOctopusModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
@@ -31,7 +34,7 @@ local function getOctopusModel()
 	end
 end
 
--- スケール適用関数
+-- スケール適用
 local function applyScale()
 	local totalKG = BASE_KG + currentOffsetKG
 	local scaleAmount = BASE_SCALE + ((totalKG - BASE_KG) * PER_KG_SCALE)
@@ -42,36 +45,36 @@ local function applyScale()
 	end
 end
 
--- 左矢印（小さく）
+-- 小さくするボタン ←
 MainSection:NewButton("← Shrink", "Make Octopus Smaller", function()
-	if currentOffsetKG > MIN_KG then
+	if currentOffsetKG > MIN_OFFSET_KG then
 		currentOffsetKG = currentOffsetKG - 1.5
 		applyScale()
 	end
 end)
 
--- 右矢印（大きく）
+-- 大きくするボタン →
 MainSection:NewButton("→ Grow", "Make Octopus Bigger", function()
-	if currentOffsetKG < MAX_KG then
+	if currentOffsetKG < MAX_OFFSET_KG then
 		currentOffsetKG = currentOffsetKG + 1.5
 		applyScale()
 	end
 end)
 
--- 白くするボタン
+-- タコを白くする関数
 local function makeOctopusWhite()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
 			for _, part in ipairs(model:GetDescendants()) do
 				if part:IsA("BasePart") then
-					part.Color = Color3.new(1, 1, 1) -- permanently white
+					part.Color = Color3.new(1, 1, 1)
 				end
 			end
 		end
 	end
 end
 
--- Button to make the octopus white permanently
-MainSection:NewButton("Change the AGE of your pet", "Permanently turn octopus white", function()
+-- 白くするボタン（名前は変更可能）
+MainSection:NewButton("Change th AGE of your pet", "Permanently turn octopus white", function()
 	makeOctopusWhite()
 end)
