@@ -9,7 +9,7 @@ local MainTab = Window:NewTab("Scale")
 local MainSection = MainTab:NewSection("Pet Size Changer")
 
 -- 定数
-local BASE_KG = 2.85
+local BASE_KG = 20
 local BASE_SCALE = 1.0
 local PER_KG_SCALE = 2.0
 local MIN_KG = 2.85
