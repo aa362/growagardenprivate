@@ -14,36 +14,101 @@ local BASE_KG = 2.85
 local BASE_SCALE = 1.0
 local PER_KG_SCALE = 0.06
 
--- Functions same as before (getOctopusModel, scaleFootGroundTexture, makeOctopusWhite, getInventoryWeightLabel) ...
--- （省略。前のコードからコピーしてください）
-
--- 入力ボックスで体重を入力
-MainSection:NewTextBox("Enter Weight Offset (kg)", "Enter a number from 0 to 160", function(input)
-	local offsetKG = tonumber(input)
-	if offsetKG then
-		if offsetKG < 0 then offsetKG = 0 end
-		if offsetKG > 160 then offsetKG = 160 end
-
-		local currentKG = BASE_KG + offsetKG
-		local scaleAmount = BASE_SCALE + (offsetKG * PER_KG_SCALE)
-
-		local octopus = getOctopusModel()
-		if octopus then
-			octopus:ScaleTo(scaleAmount)
-			scaleFootGroundTexture(octopus, scaleAmount)
+-- Get octopus in workspace
+local function getOctopusModel()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+			if root then
+				model.PrimaryPart = root
+				return model
+			end
 		end
-
-		local invLabel = getInventoryWeightLabel()
-		if invLabel then
-			invLabel.Text = string.format("%.2f kg", currentKG)
-		end
-	else
-		-- 数字じゃなかった場合の処理（何もしないかメッセージなど）
-		print("Invalid input: please enter a number.")
 	end
+end
+
+-- Get weight TextLabel in inventory
+local function getInventoryWeightLabel()
+	for _, gui in ipairs(ReplicatedStorage:GetDescendants()) do
+		if gui:IsA("TextLabel") and gui.Text:match("kg") then
+			return gui
+		end
+	end
+end
+
+-- Scale ground texture under octopus only
+local function scaleFootGroundTexture(model, scale)
+	local origin = model.PrimaryPart.Position
+	local direction = Vector3.new(0, -10, 0)
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {model}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(origin, direction, params)
+
+	if result and result.Instance and result.Instance:IsA("BasePart") then
+		for _, tex in ipairs(result.Instance:GetDescendants()) do
+			if tex:IsA("Texture") then
+				tex.StudsPerTileU = (tex.StudsPerTileU or 1) * scale
+				tex.StudsPerTileV = (tex.StudsPerTileV or 1) * scale
+			end
+		end
+	end
+end
+
+-- Permanently make octopus white (excluding eyes/mouth)
+local function makeOctopusWhite()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					local name = part.Name:lower()
+					if not (name:find("eye") or name:find("mouth") or name:find("pupil") or name:find("iris") or name:find("tongue") or name:find("tooth") or name:find("teeth")) then
+						part.Color = Color3.new(1, 1, 1) -- 白
+						part.Material = Enum.Material.SmoothPlastic -- 任意で追加
+					end
+				end
+			end
+		end
+	end
+end
+
+-- 数値入力（TextBox）でサイズ変更
+local weightBox = MainSection:NewTextBox("Enter Weight Offset (kg)", "Enter number 0–160", function() end)
+
+-- 入力を反映（信頼性の高い方法）
+task.spawn(function()
+	while not weightBox or not weightBox.TextBox do
+		task.wait(0.1)
+	end
+
+	weightBox.TextBox.FocusLost:Connect(function()
+		local input = weightBox.TextBox.Text
+		local offsetKG = tonumber(input)
+
+		if offsetKG then
+			if offsetKG < 0 then offsetKG = 0 end
+			if offsetKG > 160 then offsetKG = 160 end
+
+			local currentKG = BASE_KG + offsetKG
+			local scaleAmount = BASE_SCALE + (offsetKG * PER_KG_SCALE)
+
+			local octopus = getOctopusModel()
+			if octopus then
+				octopus:ScaleTo(scaleAmount)
+				scaleFootGroundTexture(octopus, scaleAmount)
+			end
+
+			local invLabel = getInventoryWeightLabel()
+			if invLabel then
+				invLabel.Text = string.format("%.2f kg", currentKG)
+			end
+		else
+			warn("無効な入力です（数値を入力してください）")
+		end
+	end)
 end)
 
--- Make white button
+-- ボタンで白くする
 MainSection:NewButton("Make Octopus White", "Turn body white (eyes/mouth excluded)", function()
 	makeOctopusWhite()
 end)
