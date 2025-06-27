@@ -1,81 +1,5 @@
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
+local weightBox = MainSection:NewTextBox("Size Offset (kg)", "-10 ～ +160", function() end)
 
--- Load Kavo UI
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Adjust", "Midnight")
-local MainTab = Window:NewTab("Octopus")
-local MainSection = MainTab:NewSection("Size Control")
-
--- Settings
-local BASE_KG = 2.85
-local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.06
-
--- Get octopus in workspace
-local function getOctopusModel()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
-			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-			if root then
-				model.PrimaryPart = root
-				return model
-			end
-		end
-	end
-end
-
--- Get weight TextLabel in inventory
-local function getInventoryWeightLabel()
-	for _, gui in ipairs(ReplicatedStorage:GetDescendants()) do
-		if gui:IsA("TextLabel") and gui.Text:match("kg") then
-			return gui
-		end
-	end
-end
-
--- Scale ground texture under octopus only
-local function scaleFootGroundTexture(model, scale)
-	local origin = model.PrimaryPart.Position
-	local direction = Vector3.new(0, -10, 0)
-	local params = RaycastParams.new()
-	params.FilterDescendantsInstances = {model}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-	local result = Workspace:Raycast(origin, direction, params)
-
-	if result and result.Instance and result.Instance:IsA("BasePart") then
-		for _, tex in ipairs(result.Instance:GetDescendants()) do
-			if tex:IsA("Texture") then
-				tex.StudsPerTileU = (tex.StudsPerTileU or 1) * scale
-				tex.StudsPerTileV = (tex.StudsPerTileV or 1) * scale
-			end
-		end
-	end
-end
-
--- Permanently make octopus white (excluding eyes/mouth)
-local function makeOctopusWhite()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("BasePart") then
-					local name = part.Name:lower()
-					if not (name:find("eye") or name:find("mouth") or name:find("pupil") or name:find("iris") or name:find("tongue") or name:find("tooth") or name:find("teeth")) then
-						part.Color = Color3.new(1, 1, 1) -- 白
-						part.Material = Enum.Material.SmoothPlastic -- 任意で追加
-					end
-				end
-			end
-		end
-	end
-end
-
--- 数値入力（TextBox）でサイズ変更
-local weightBox = MainSection:NewTextBox("Enter Weight Offset (kg)", "Enter number 0–160", function() end)
-
--- 入力を反映（信頼性の高い方法）
 task.spawn(function()
 	while not weightBox or not weightBox.TextBox do
 		task.wait(0.1)
@@ -83,14 +7,14 @@ task.spawn(function()
 
 	weightBox.TextBox.FocusLost:Connect(function()
 		local input = weightBox.TextBox.Text
-		local offsetKG = tonumber(input)
+		local kgOffset = tonumber(input)
 
-		if offsetKG then
-			if offsetKG < 0 then offsetKG = 0 end
-			if offsetKG > 160 then offsetKG = 160 end
+		if kgOffset then
+			if kgOffset < -10 then kgOffset = -10 end
+			if kgOffset > 160 then kgOffset = 160 end
 
-			local currentKG = BASE_KG + offsetKG
-			local scaleAmount = BASE_SCALE + (offsetKG * PER_KG_SCALE)
+			local currentKG = BASE_KG + kgOffset
+			local scaleAmount = BASE_SCALE + (kgOffset * PER_KG_SCALE)
 
 			local octopus = getOctopusModel()
 			if octopus then
@@ -98,17 +22,17 @@ task.spawn(function()
 				scaleFootGroundTexture(octopus, scaleAmount)
 			end
 
-			local invLabel = getInventoryWeightLabel()
-			if invLabel then
-				invLabel.Text = string.format("%.2f kg", currentKG)
+			local inventoryOctopus = getInventoryOctopus()
+			if inventoryOctopus then
+				inventoryOctopus:ScaleTo(scaleAmount)
+			end
+
+			local weightLabel = getInventoryWeightLabel()
+			if weightLabel then
+				weightLabel.Text = string.format("%.2f kg", currentKG)
 			end
 		else
-			warn("無効な入力です（数値を入力してください）")
+			warn("Invalid input: please enter a number.")
 		end
 	end)
-end)
-
--- ボタンで白くする
-MainSection:NewButton("Make Octopus White", "Turn body white (eyes/mouth excluded)", function()
-	makeOctopusWhite()
 end)
