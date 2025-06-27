@@ -9,12 +9,12 @@ local Window = Library.CreateLib("Raccoon Appearance Size", "Midnight")
 local MainTab = Window:NewTab("Scale")
 local MainSection = MainTab:NewSection("Adjust Pet Size")
 
--- 設定
+-- Settings
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
 local PER_KG_SCALE = 0.06
 
--- モデル取得
+-- Get raccoon in workspace
 local function getRaccoonModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("raccoon") then
@@ -27,7 +27,7 @@ local function getRaccoonModel()
 	end
 end
 
--- インベントリのラクーン取得（ReplicatedStorageなど）
+-- Get raccoon in inventory
 local function getInventoryRaccoon()
 	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("raccoon") then
@@ -40,7 +40,7 @@ local function getInventoryRaccoon()
 	end
 end
 
--- 足元の地面を特定して、そのテクスチャだけを拡大
+-- Scale floor texture under raccoon
 local function scaleFootGroundTexture(model, scale)
 	local origin = model.PrimaryPart.Position
 	local direction = Vector3.new(0, -10, 0)
@@ -59,8 +59,8 @@ local function scaleFootGroundTexture(model, scale)
 	end
 end
 
--- スライダーUI（−10kg〜+50kg）
-MainSection:NewSlider("Weight (kg)", "Adjust from -10kg to +50kg", 52.85, -7.15, function(currentKG)
+-- UI slider: -10kg to +160kg (max 162.85kg)
+MainSection:NewSlider("Weight (kg)", "Adjust from -10kg to +160kg", 162.85, -7.15, function(currentKG)
 	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
 
 	local raccoonWorld = getRaccoonModel()
