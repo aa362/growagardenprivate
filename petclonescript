@@ -1,52 +1,62 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+
+-- Load Kavo UI
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Adjust", "Midnight")
-local MainTab = Window:NewTab("Octopus")
-local MainSection = MainTab:NewSection("Size Control")
+local Window = Library.CreateLib("Octopus Size Controller", "Midnight")
+local MainTab = Window:NewTab("Size")
+local MainSection = MainTab:NewSection("Adjust Octopus Weight (Visual Only)")
 
--- TextBox 作成
-local weightBox = MainSection:NewTextBox("Size Offset (kg)", "-10 ～ +160", function() end)
-
--- 実体の TextBox にアクセス（動作タイミング調整）
-task.delay(0.5, function()
-	local actualTextBox = nil
-	if weightBox and weightBox.TextBox then
-		actualTextBox = weightBox.TextBox
-	elseif weightBox then
-		actualTextBox = weightBox:FindFirstChildWhichIsA("TextBox", true)
-	end
-
-	if actualTextBox then
-		actualTextBox.FocusLost:Connect(function()
-			local input = actualTextBox.Text
-			local kgOffset = tonumber(input)
-
-			if kgOffset then
-				if kgOffset < -10 then kgOffset = -10 end
-				if kgOffset > 160 then kgOffset = 160 end
-
-				local currentKG = BASE_KG + kgOffset
-				local scaleAmount = BASE_SCALE + (kgOffset * PER_KG_SCALE)
-
-				local octopus = getOctopusModel()
-				if octopus then
-					octopus:ScaleTo(scaleAmount)
-					scaleFootGroundTexture(octopus, scaleAmount)
-				end
-
-				local inventoryOctopus = getInventoryOctopus()
-				if inventoryOctopus then
-					inventoryOctopus:ScaleTo(scaleAmount)
-				end
-
-				local weightLabel = getInventoryWeightLabel()
-				if weightLabel then
-					weightLabel.Text = string.format("%.2f kg", currentKG)
-				end
+-- Get Octopus Model (first match only)
+local function getOctopusModel()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			if model.PrimaryPart then
+				return model
 			else
-				warn("Invalid input: please enter a number.")
+				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+				if root then
+					model.PrimaryPart = root
+					return model
+				end
 			end
-		end)
-	else
-		warn("TextBox オブジェクトが見つかりませんでした")
+		end
 	end
+end
+
+-- Permanently make octopus white (excluding eyes/mouth/etc)
+local function makeOctopusWhite()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					local name = part.Name:lower()
+					if not (name:find("eye") or name:find("mouth") or name:find("pupil") or name:find("iris") or name:find("tongue") or name:find("tooth") or name:find("teeth")) then
+						part.Color = Color3.new(1, 1, 1)
+						part.Material = Enum.Material.SmoothPlastic
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Scaling constants
+local BASE_KG = 2.85
+local BASE_SCALE = 1.0
+local PER_KG_SCALE = 0.06 -- 1kg adds 0.06 scale
+
+-- Create Slider
+MainSection:NewSlider("Weight (kg)", "Adjust from 0.5kg to 10.0kg", 10, 0.5, function(currentKG)
+	local model = getOctopusModel()
+	if model then
+		local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
+		model:ScaleTo(scaleAmount)
+	end
+end)
+
+-- Create Button to turn white
+MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
+	makeOctopusWhite()
 end)
