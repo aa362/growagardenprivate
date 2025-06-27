@@ -72,6 +72,6 @@ local function makeOctopusWhite()
 end
 
 -- Button to make the octopus white permanently
-MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
+MainSection:NewButton("Change the AGE of your pet", "Permanently turn octopus white", function()
 	makeOctopusWhite()
 end)
