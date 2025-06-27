@@ -85,8 +85,7 @@ local function makeOctopusWhite()
 	end
 end
 
--- スライダー（0.5～100kg）
-MainSection:NewSlider("Octopus Weight (kg)", "Adjust from 0.5 to 100kg", 100, 0.5, function(currentKG)
+MainSection:NewSlider("Octopus Weight (kg)", "Adjust from 2.85 to 100kg", 100, 2.85, function(currentKG)
 	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
 
 	local octopus = getOctopusModel()
