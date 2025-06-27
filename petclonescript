@@ -43,17 +43,21 @@ local function applyScale()
 end
 
 -- タコを白くする
-local function makeOctopusWhite()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.Color = Color3.new(1, 1, 1) -- 白
-					part.Material = Enum.Material.SmoothPlastic
-				end
-			end
-		end
-	end
+local Workspace = game:GetService("Workspace")
+
+for _, model in ipairs(Workspace:GetDescendants()) do
+    if model:IsA("Model") and model.Name:lower():find("octpus") then
+        -- 全部のBasePartを赤く点滅させる
+        for _, part in ipairs(model:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local originalColor = part.Color
+                part.Color = Color3.new(1, 1, 1) 
+                task.delay(1, function()
+                    part.Color = originalColor
+                end)
+            end
+        end
+    end
 end
 
 -- 左矢印（小さく）
