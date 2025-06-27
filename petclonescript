@@ -11,7 +11,7 @@ local MainSection = MainTab:NewSection("Adjust Octopus")
 -- 定数
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.1
+local PER_KG_SCALE = 0.25
 local MIN_KG = -10
 local MAX_KG = 160
 
@@ -42,24 +42,6 @@ local function applyScale()
 	end
 end
 
--- タコを白くする
-local Workspace = game:GetService("Workspace")
-
-for _, model in ipairs(Workspace:GetDescendants()) do
-    if model:IsA("Model") and model.Name:lower():find("octpus") then
-        -- 全部のBasePartを赤く点滅させる
-        for _, part in ipairs(model:GetDescendants()) do
-            if part:IsA("BasePart") then
-                local originalColor = part.Color
-                part.Color = Color3.new(1, 1, 1) 
-                task.delay(1, function()
-                    part.Color = originalColor
-                end)
-            end
-        end
-    end
-end
-
 -- 左矢印（小さく）
 MainSection:NewButton("← Shrink", "Make Octopus Smaller", function()
 	if currentOffsetKG > MIN_KG then
@@ -77,6 +59,19 @@ MainSection:NewButton("→ Grow", "Make Octopus Bigger", function()
 end)
 
 -- 白くするボタン
+local function makeOctopusWhite()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.Color = Color3.new(1, 1, 1) -- permanently white
+				end
+			end
+		end
+	end
+end
+
+-- Button to make the octopus white permanently
 MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
 	makeOctopusWhite()
 end)
