@@ -1,38 +1,52 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Octopus Adjust", "Midnight")
+local MainTab = Window:NewTab("Octopus")
+local MainSection = MainTab:NewSection("Size Control")
+
+-- TextBox 作成
 local weightBox = MainSection:NewTextBox("Size Offset (kg)", "-10 ～ +160", function() end)
 
-task.spawn(function()
-	while not weightBox or not weightBox.TextBox do
-		task.wait(0.1)
+-- 実体の TextBox にアクセス（動作タイミング調整）
+task.delay(0.5, function()
+	local actualTextBox = nil
+	if weightBox and weightBox.TextBox then
+		actualTextBox = weightBox.TextBox
+	elseif weightBox then
+		actualTextBox = weightBox:FindFirstChildWhichIsA("TextBox", true)
 	end
 
-	weightBox.TextBox.FocusLost:Connect(function()
-		local input = weightBox.TextBox.Text
-		local kgOffset = tonumber(input)
+	if actualTextBox then
+		actualTextBox.FocusLost:Connect(function()
+			local input = actualTextBox.Text
+			local kgOffset = tonumber(input)
 
-		if kgOffset then
-			if kgOffset < -10 then kgOffset = -10 end
-			if kgOffset > 160 then kgOffset = 160 end
+			if kgOffset then
+				if kgOffset < -10 then kgOffset = -10 end
+				if kgOffset > 160 then kgOffset = 160 end
 
-			local currentKG = BASE_KG + kgOffset
-			local scaleAmount = BASE_SCALE + (kgOffset * PER_KG_SCALE)
+				local currentKG = BASE_KG + kgOffset
+				local scaleAmount = BASE_SCALE + (kgOffset * PER_KG_SCALE)
 
-			local octopus = getOctopusModel()
-			if octopus then
-				octopus:ScaleTo(scaleAmount)
-				scaleFootGroundTexture(octopus, scaleAmount)
+				local octopus = getOctopusModel()
+				if octopus then
+					octopus:ScaleTo(scaleAmount)
+					scaleFootGroundTexture(octopus, scaleAmount)
+				end
+
+				local inventoryOctopus = getInventoryOctopus()
+				if inventoryOctopus then
+					inventoryOctopus:ScaleTo(scaleAmount)
+				end
+
+				local weightLabel = getInventoryWeightLabel()
+				if weightLabel then
+					weightLabel.Text = string.format("%.2f kg", currentKG)
+				end
+			else
+				warn("Invalid input: please enter a number.")
 			end
-
-			local inventoryOctopus = getInventoryOctopus()
-			if inventoryOctopus then
-				inventoryOctopus:ScaleTo(scaleAmount)
-			end
-
-			local weightLabel = getInventoryWeightLabel()
-			if weightLabel then
-				weightLabel.Text = string.format("%.2f kg", currentKG)
-			end
-		else
-			warn("Invalid input: please enter a number.")
-		end
-	end)
+		end)
+	else
+		warn("TextBox オブジェクトが見つかりませんでした")
+	end
 end)
