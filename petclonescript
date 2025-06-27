@@ -3,11 +3,11 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- Kavo UI
+-- Load Kavo UI
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Appearance", "Midnight")
-local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Adjust Octopus")
+local Window = Library.CreateLib("Octopus Adjust", "Midnight")
+local MainTab = Window:NewTab("Octopus")
+local MainSection = MainTab:NewSection("Size Control")
 
 -- Settings
 local BASE_KG = 2.85
@@ -27,7 +27,16 @@ local function getOctopusModel()
 	end
 end
 
--- Get inventory octopus
+-- Get weight TextLabel in inventory
+local function getInventoryWeightLabel()
+	for _, gui in ipairs(ReplicatedStorage:GetDescendants()) do
+		if gui:IsA("TextLabel") and gui.Text:match("kg") then
+			return gui
+		end
+	end
+end
+
+-- Get inventory octopus model (if needed)
 local function getInventoryOctopus()
 	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
@@ -40,7 +49,7 @@ local function getInventoryOctopus()
 	end
 end
 
--- Scale floor texture under octopus only
+-- Scale ground texture under octopus only
 local function scaleFootGroundTexture(model, scale)
 	local origin = model.PrimaryPart.Position
 	local direction = Vector3.new(0, -10, 0)
@@ -59,36 +68,40 @@ local function scaleFootGroundTexture(model, scale)
 	end
 end
 
--- Permanently turn octopus white
+-- Permanently make octopus white (excluding eyes/mouth)
 local function makeOctopusWhite()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
 			for _, part in ipairs(model:GetDescendants()) do
 				if part:IsA("BasePart") then
-					part.Color = Color3.new(1, 1, 1) -- permanently white
+					local name = part.Name:lower()
+					if not (name:find("eye") or name:find("mouth") or name:find("pupil") or name:find("iris") or name:find("tongue") or name:find("tooth")) then
+						part.Color = Color3.new(1, 1, 1)
+					end
 				end
 			end
 		end
 	end
 end
 
--- Slider to scale from -10kg to +160kg
-MainSection:NewSlider("Weight (kg)", "Adjust from -10kg to +160kg", 162.85, -7.15, function(currentKG)
-	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
+-- Slider: 0kg（基準）～ +160kg のみ対応
+MainSection:NewSlider("Size (kg+)", "Grow the Octopus", 160, 0, function(offsetKG)
+	local currentKG = BASE_KG + offsetKG
+	local scaleAmount = BASE_SCALE + (offsetKG * PER_KG_SCALE)
 
-	local octopusWorld = getOctopusModel()
-	if octopusWorld then
-		octopusWorld:ScaleTo(scaleAmount)
-		scaleFootGroundTexture(octopusWorld, scaleAmount)
+	local octopus = getOctopusModel()
+	if octopus then
+		octopus:ScaleTo(scaleAmount)
+		scaleFootGroundTexture(octopus, scaleAmount)
 	end
 
-	local octopusInventory = getInventoryOctopus()
-	if octopusInventory then
-		octopusInventory:ScaleTo(scaleAmount)
+	local invLabel = getInventoryWeightLabel()
+	if invLabel then
+		invLabel.Text = string.format("%.2f kg", currentKG)
 	end
 end)
 
--- Button to make the octopus white permanently
-MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
+-- Make white button
+MainSection:NewButton("Make Octopus White", "Turn body white (eyes/mouth excluded)", function()
 	makeOctopusWhite()
 end)
