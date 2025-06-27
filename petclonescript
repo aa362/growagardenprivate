@@ -1,20 +1,24 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 -- UIライブラリ読み込み
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Size Controller", "Midnight")
-local MainTab = Window:NewTab("Size")
-local MainSection = MainTab:NewSection("Adjust Octopus Size")
+local Window = Library.CreateLib("Octopus Appearance", "Midnight")
+local MainTab = Window:NewTab("Scale")
+local MainSection = MainTab:NewSection("Adjust Octopus")
 
--- 定数（調整可能）
+-- 定数
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.2
+local PER_KG_SCALE = 0.06
+local MIN_KG = -10
+local MAX_KG = 160
 
--- モデル取得（Octopus）
+-- 現在のオフセット
+local currentOffsetKG = 0
+
+-- タコモデルを取得
 local function getOctopusModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
@@ -27,85 +31,48 @@ local function getOctopusModel()
 	end
 end
 
--- インベントリ側のOctopusモデル
-local function getInventoryOctopus()
-	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
-			local root = model:FindFirstChildWhichIsA("BasePart")
-			if root then
-				model.PrimaryPart = root
-				return model
-			end
-		end
+-- スケール適用関数
+local function applyScale()
+	local totalKG = BASE_KG + currentOffsetKG
+	local scaleAmount = BASE_SCALE + ((totalKG - BASE_KG) * PER_KG_SCALE)
+
+	local octopus = getOctopusModel()
+	if octopus then
+		octopus:ScaleTo(scaleAmount)
 	end
 end
 
--- 重さテキスト表示（"kg"を含むTextLabel）
-local function getInventoryWeightLabel()
-	for _, gui in ipairs(ReplicatedStorage:GetDescendants()) do
-		if gui:IsA("TextLabel") and gui.Text:match("kg") then
-			return gui
-		end
-	end
-end
-
--- タコの足元の地面テクスチャ拡大
-local function scaleFootGroundTexture(model, scale)
-	local origin = model.PrimaryPart.Position
-	local direction = Vector3.new(0, -10, 0)
-	local params = RaycastParams.new()
-	params.FilterDescendantsInstances = {model}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-
-	local result = Workspace:Raycast(origin, direction, params)
-	if result and result.Instance and result.Instance:IsA("BasePart") then
-		for _, tex in ipairs(result.Instance:GetDescendants()) do
-			if tex:IsA("Texture") then
-				tex.StudsPerTileU = scale
-				tex.StudsPerTileV = scale
-			end
-		end
-	end
-end
-
--- 白くする（目や口は除外）
+-- タコを白くする
 local function makeOctopusWhite()
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("octopus") then
 			for _, part in ipairs(model:GetDescendants()) do
 				if part:IsA("BasePart") then
-					local name = part.Name:lower()
-					if not (name:find("eye") or name:find("mouth") or name:find("pupil") or name:find("iris") or name:find("tongue") or name:find("tooth")) then
-						part.Color = Color3.new(1, 1, 1)
-						part.Material = Enum.Material.SmoothPlastic
-					end
+					part.Color = Color3.new(1, 1, 1) -- 白
+					part.Material = Enum.Material.SmoothPlastic
 				end
 			end
 		end
 	end
 end
 
-MainSection:NewSlider("Octopus Weight (kg)", "Adjust from 2.85 to 100kg", 100, 2.85, function(currentKG)
-	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
-
-	local octopus = getOctopusModel()
-	if octopus then
-		octopus:ScaleTo(scaleAmount)
-		scaleFootGroundTexture(octopus, scaleAmount)
+-- 左矢印（小さく）
+MainSection:NewButton("← Shrink", "Make Octopus Smaller", function()
+	if currentOffsetKG > MIN_KG then
+		currentOffsetKG = currentOffsetKG - 0.5
+		applyScale()
 	end
+end)
 
-	local invModel = getInventoryOctopus()
-	if invModel then
-		invModel:ScaleTo(scaleAmount)
-	end
-
-	local weightLabel = getInventoryWeightLabel()
-	if weightLabel then
-		weightLabel.Text = string.format("%.2f kg", currentKG)
+-- 右矢印（大きく）
+MainSection:NewButton("→ Grow", "Make Octopus Bigger", function()
+	if currentOffsetKG < MAX_KG then
+		currentOffsetKG = currentOffsetKG + 0.5
+		applyScale()
 	end
 end)
 
 -- 白くするボタン
-MainSection:NewButton("Make Octopus White", "Permanently make body white (excluding eyes/mouth)", function()
+MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
 	makeOctopusWhite()
 end)
