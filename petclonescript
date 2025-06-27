@@ -1,40 +1,49 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- UIライブラリ読み込み（Kavo UI）
+-- Load Kavo UI
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Octopus Size Controller", "Midnight")
-local MainTab = Window:NewTab("Size")
-local MainSection = MainTab:NewSection("ペットの重さを調整（見た目のみ）")
+local Window = Library.CreateLib("Octopus Adjust", "Midnight")
+local MainTab = Window:NewTab("Octopus")
+local MainSection = MainTab:NewSection("Size Control")
 
--- タコモデル取得（最初の1体のみ対象）
-local function getOctopusModel()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
-			if model.PrimaryPart then
-				return model
-			else
-				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-				if root then
-					model.PrimaryPart = root
-					return model
-				end
-			end
-		end
-	end
-end
-
--- 基準スケール（2.85kg = 約1.0倍）
+-- Settings
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.06  -- 1kgごとに0.06スケール増加（調整可能）
+local PER_KG_SCALE = 0.06
 
--- スライダー作成（デフォルト2.85kgから最大+160kgまで）
-MainSection:NewSlider("重さ (kg)", "2.85kg から +160kg 拡大", 162.85, 2.85, function(currentKG)
-	local model = getOctopusModel()
-	if model then
-		local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
-		model:ScaleTo(scaleAmount)
+-- Functions same as before (getOctopusModel, scaleFootGroundTexture, makeOctopusWhite, getInventoryWeightLabel) ...
+-- （省略。前のコードからコピーしてください）
+
+-- 入力ボックスで体重を入力
+MainSection:NewTextBox("Enter Weight Offset (kg)", "Enter a number from 0 to 160", function(input)
+	local offsetKG = tonumber(input)
+	if offsetKG then
+		if offsetKG < 0 then offsetKG = 0 end
+		if offsetKG > 160 then offsetKG = 160 end
+
+		local currentKG = BASE_KG + offsetKG
+		local scaleAmount = BASE_SCALE + (offsetKG * PER_KG_SCALE)
+
+		local octopus = getOctopusModel()
+		if octopus then
+			octopus:ScaleTo(scaleAmount)
+			scaleFootGroundTexture(octopus, scaleAmount)
+		end
+
+		local invLabel = getInventoryWeightLabel()
+		if invLabel then
+			invLabel.Text = string.format("%.2f kg", currentKG)
+		end
+	else
+		-- 数字じゃなかった場合の処理（何もしないかメッセージなど）
+		print("Invalid input: please enter a number.")
 	end
+end)
+
+-- Make white button
+MainSection:NewButton("Make Octopus White", "Turn body white (eyes/mouth excluded)", function()
+	makeOctopusWhite()
 end)
