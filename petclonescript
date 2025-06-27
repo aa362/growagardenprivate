@@ -5,19 +5,19 @@ local player = Players.LocalPlayer
 
 -- Kavo UI
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Raccoon Appearance Size", "Midnight")
+local Window = Library.CreateLib("Octopus Appearance", "Midnight")
 local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Adjust Pet Size")
+local MainSection = MainTab:NewSection("Adjust Octopus")
 
 -- Settings
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
 local PER_KG_SCALE = 0.06
 
--- Get raccoon in workspace
-local function getRaccoonModel()
+-- Get octopus in workspace
+local function getOctopusModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("raccoon") then
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
 			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
 			if root then
 				model.PrimaryPart = root
@@ -27,10 +27,10 @@ local function getRaccoonModel()
 	end
 end
 
--- Get raccoon in inventory
-local function getInventoryRaccoon()
+-- Get inventory octopus
+local function getInventoryOctopus()
 	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("raccoon") then
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
 			local root = model:FindFirstChildWhichIsA("BasePart")
 			if root then
 				model.PrimaryPart = root
@@ -40,7 +40,7 @@ local function getInventoryRaccoon()
 	end
 end
 
--- Scale floor texture under raccoon
+-- Scale floor texture under octopus only
 local function scaleFootGroundTexture(model, scale)
 	local origin = model.PrimaryPart.Position
 	local direction = Vector3.new(0, -10, 0)
@@ -59,18 +59,36 @@ local function scaleFootGroundTexture(model, scale)
 	end
 end
 
--- UI slider: -10kg to +160kg (max 162.85kg)
+-- Permanently turn octopus white
+local function makeOctopusWhite()
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("octopus") then
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.Color = Color3.new(1, 1, 1) -- permanently white
+				end
+			end
+		end
+	end
+end
+
+-- Slider to scale from -10kg to +160kg
 MainSection:NewSlider("Weight (kg)", "Adjust from -10kg to +160kg", 162.85, -7.15, function(currentKG)
 	local scaleAmount = BASE_SCALE + ((currentKG - BASE_KG) * PER_KG_SCALE)
 
-	local raccoonWorld = getRaccoonModel()
-	if raccoonWorld then
-		raccoonWorld:ScaleTo(scaleAmount)
-		scaleFootGroundTexture(raccoonWorld, scaleAmount)
+	local octopusWorld = getOctopusModel()
+	if octopusWorld then
+		octopusWorld:ScaleTo(scaleAmount)
+		scaleFootGroundTexture(octopusWorld, scaleAmount)
 	end
 
-	local raccoonInventory = getInventoryRaccoon()
-	if raccoonInventory then
-		raccoonInventory:ScaleTo(scaleAmount)
+	local octopusInventory = getInventoryOctopus()
+	if octopusInventory then
+		octopusInventory:ScaleTo(scaleAmount)
 	end
+end)
+
+-- Button to make the octopus white permanently
+MainSection:NewButton("Make Octopus White", "Permanently turn octopus white", function()
+	makeOctopusWhite()
 end)
