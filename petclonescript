@@ -11,7 +11,7 @@ local MainSection = MainTab:NewSection("Adjust Octopus")
 -- 定数
 local BASE_KG = 2.85
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 0.06
+local PER_KG_SCALE = 0.1
 local MIN_KG = -10
 local MAX_KG = 160
 
@@ -59,7 +59,7 @@ end
 -- 左矢印（小さく）
 MainSection:NewButton("← Shrink", "Make Octopus Smaller", function()
 	if currentOffsetKG > MIN_KG then
-		currentOffsetKG = currentOffsetKG - 0.5
+		currentOffsetKG = currentOffsetKG - 1
 		applyScale()
 	end
 end)
@@ -67,7 +67,7 @@ end)
 -- 右矢印（大きく）
 MainSection:NewButton("→ Grow", "Make Octopus Bigger", function()
 	if currentOffsetKG < MAX_KG then
-		currentOffsetKG = currentOffsetKG + 0.5
+		currentOffsetKG = currentOffsetKG + 1
 		applyScale()
 	end
 end)
