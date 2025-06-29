@@ -1,111 +1,11 @@
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
 
--- UIライブラリ読み込み
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Fennec Fox Appearance", "Midnight")
-local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Pet Size Changer")
-
--- 定数
-local BASE_KG = 20
-local BASE_SCALE = 1.0
-local PER_KG_SCALE = 2.0
-local MIN_KG = 2.85
-local MAX_KG = 100
-
-local MIN_OFFSET_KG = MIN_KG - BASE_KG -- -17.15
-local MAX_OFFSET_KG = MAX_KG - BASE_KG -- 80
-local currentOffsetKG = 0
-
--- WorkspaceからFennec Foxモデル取得
-local function getFennecFoxModel()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("fennec") then
-			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-			if root then
-				model.PrimaryPart = root
-				return model
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if model:IsA("Model") and model.Name:lower():find("red dragon") then
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.fromRGB(0, 100, 255) -- 青色（自由に変更可）
 			end
 		end
 	end
 end
-
--- スケール適用
-local function applyScale()
-	local totalKG = BASE_KG + currentOffsetKG
-	local scaleAmount = BASE_SCALE + ((totalKG - BASE_KG) * PER_KG_SCALE)
-
-	local fox = getFennecFoxModel()
-	if fox then
-		fox:ScaleTo(scaleAmount)
-	end
-end
-
--- 小さくする ←
-MainSection:NewButton("← Shrink", "Make Fennec Fox Smaller", function()
-	if currentOffsetKG > MIN_OFFSET_KG then
-		currentOffsetKG = currentOffsetKG - 1.5
-		applyScale()
-	end
-end)
-
--- 大きくする →
-MainSection:NewButton("→ Grow", "Make Fennec Fox Bigger", function()
-	if currentOffsetKG < MAX_OFFSET_KG then
-		currentOffsetKG = currentOffsetKG + 1.5
-		applyScale()
-	end
-end)
-
--- 白くする
-local function makeFennecFoxWhite()
-	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("fennec") then
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.Color = Color3.new(1, 1, 1)
-				end
-			end
-		end
-	end
-end
-
-MainSection:NewButton("Make Fennec Fox White", "Turn it white", function()
-	makeFennecFoxWhite()
-end)
-
--- インベントリに追加（見た目だけ）
-MainSection:NewButton("Add Fennec Fox to Inventory", "Add to Backpack + UI Inventory", function()
-	-- 元モデルを探す（ReplicatedStorage内）
-	local sourceModel
-	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("fennec") then
-			sourceModel = model
-			break
-		end
-	end
-	if not sourceModel then
-		warn("Fennec Fox model not found in ReplicatedStorage")
-		return
-	end
-
-	-- ① Backpack用（手に持てるように）
-	local tool = Instance.new("Tool")
-	tool.Name = "FennecFoxTool"
-	tool.RequiresHandle = false
-	local foxClone = sourceModel:Clone()
-	foxClone.Parent = tool
-	tool.Parent = player.Backpack
-
-	-- ② UI表示用（ゲームのUI構造により調整が必要）
-	local uiFolder = player:FindFirstChild("PlayerGui"):FindFirstChild("Inventory") -- 適宜調整
-	if uiFolder then
-		local uiClone = sourceModel:Clone()
-		uiClone.Parent = uiFolder
-	else
-		warn("UI Inventory not found. Check UI structure.")
-	end
-end)
