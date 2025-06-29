@@ -1,30 +1,29 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 -- UIライブラリ読み込み
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Pet Size Changer", "Midnight")
+local Window = Library.CreateLib("Fennec Fox Appearance", "Midnight")
 local MainTab = Window:NewTab("Scale")
-local MainSection = MainTab:NewSection("Pet Size Age")
+local MainSection = MainTab:NewSection("Pet Size Changer")
 
 -- 定数
-local BASE_KG = 20           -- デフォルト重量
+local BASE_KG = 20
 local BASE_SCALE = 1.0
-local PER_KG_SCALE = 2.0     -- 1kgでどれくらい拡大するか
-local MIN_KG = 2          -- 最小体重
-local MAX_KG = 100           -- 最大体重
+local PER_KG_SCALE = 2.0
+local MIN_KG = 2.85
+local MAX_KG = 100
 
-local MIN_OFFSET_KG = MIN_KG - BASE_KG -- 2.85 - 20 = -17.15
-local MAX_OFFSET_KG = MAX_KG - BASE_KG -- 100 - 20 = 80
-
--- 現在のオフセット（0＝20kgからスタート）
+local MIN_OFFSET_KG = MIN_KG - BASE_KG -- -17.15
+local MAX_OFFSET_KG = MAX_KG - BASE_KG -- 80
 local currentOffsetKG = 0
 
--- タコモデル取得
-local function getOctopusModel()
+-- WorkspaceからFennec Foxモデル取得
+local function getFennecFoxModel()
 	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
+		if model:IsA("Model") and model.Name:lower():find("fennec") then
 			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
 			if root then
 				model.PrimaryPart = root
@@ -39,32 +38,32 @@ local function applyScale()
 	local totalKG = BASE_KG + currentOffsetKG
 	local scaleAmount = BASE_SCALE + ((totalKG - BASE_KG) * PER_KG_SCALE)
 
-	local octopus = getOctopusModel()
-	if octopus then
-		octopus:ScaleTo(scaleAmount)
+	local fox = getFennecFoxModel()
+	if fox then
+		fox:ScaleTo(scaleAmount)
 	end
 end
 
--- 小さくするボタン ←
-MainSection:NewButton("← Shrink", "Make Octopus Smaller", function()
+-- 小さくする ←
+MainSection:NewButton("← Shrink", "Make Fennec Fox Smaller", function()
 	if currentOffsetKG > MIN_OFFSET_KG then
 		currentOffsetKG = currentOffsetKG - 1.5
 		applyScale()
 	end
 end)
 
--- 大きくするボタン →
-MainSection:NewButton("→ Grow", "Make Octopus Bigger", function()
+-- 大きくする →
+MainSection:NewButton("→ Grow", "Make Fennec Fox Bigger", function()
 	if currentOffsetKG < MAX_OFFSET_KG then
 		currentOffsetKG = currentOffsetKG + 1.5
 		applyScale()
 	end
 end)
 
--- タコを白くする関数
-local function makeOctopusWhite()
+-- 白くする
+local function makeFennecFoxWhite()
 	for _, model in ipairs(Workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("octopus") then
+		if model:IsA("Model") and model.Name:lower():find("fennec") then
 			for _, part in ipairs(model:GetDescendants()) do
 				if part:IsA("BasePart") then
 					part.Color = Color3.new(1, 1, 1)
@@ -74,7 +73,17 @@ local function makeOctopusWhite()
 	end
 end
 
--- 白くするボタン（名前は変更可能）
-MainSection:NewButton("Change th AGE of your pet", "Permanently turn octopus white", function()
-	makeOctopusWhite()
+MainSection:NewButton("Make Fennec Fox White", "Turn it white", function()
+	makeFennecFoxWhite()
+end)
+
+-- インベントリに追加（見た目だけ）
+MainSection:NewButton("Add Fennec Fox to Inventory", "Clone a fox model into Backpack", function()
+	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("fennec") then
+			local clone = model:Clone()
+			clone.Parent = player:WaitForChild("Backpack")
+			break
+		end
+	end
 end)
