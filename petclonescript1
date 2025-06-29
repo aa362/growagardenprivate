@@ -1,4 +1,13 @@
-local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
-Spawner.SpawnPet("Silver Monkey", 5, 12)
-Spawner.SpawnPet("Fennec Fox", 5, 12)
-Spawner.Load()
+local Workspace = game:GetService("Workspace")
+
+Workspace.ChildAdded:Connect(function(child)
+	if child:IsA("Model") then
+		-- チャットにモデル名を黄色で表示
+		game.StarterGui:SetCore("ChatMakeSystemMessage", {
+			Text = "[Spawned Pet] " .. child.Name,
+			Color = Color3.fromRGB(255, 255, 0),
+			Font = Enum.Font.SourceSansBold,
+			FontSize = Enum.FontSize.Size24
+		})
+	end
+end)
