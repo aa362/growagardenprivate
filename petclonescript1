@@ -2,12 +2,26 @@ local Workspace = game:GetService("Workspace")
 
 Workspace.ChildAdded:Connect(function(child)
 	if child:IsA("Model") then
-		-- チャットにモデル名を黄色で表示
-		game.StarterGui:SetCore("ChatMakeSystemMessage", {
-			Text = "[Spawned Pet] " .. child.Name,
-			Color = Color3.fromRGB(255, 255, 0),
-			Font = Enum.Font.SourceSansBold,
-			FontSize = Enum.FontSize.Size24
-		})
+		local rootPart = child:FindFirstChild("HumanoidRootPart") or child:FindFirstChildWhichIsA("BasePart")
+		if rootPart then
+			-- BillboardGui を作成
+			local billboard = Instance.new("BillboardGui")
+			billboard.Size = UDim2.new(0, 200, 0, 50)
+			billboard.StudsOffset = Vector3.new(0, 3, 0)
+			billboard.AlwaysOnTop = true
+			billboard.Adornee = rootPart
+			billboard.Parent = child
+
+			-- TextLabel を追加
+			local label = Instance.new("TextLabel")
+			label.Size = UDim2.new(1, 0, 1, 0)
+			label.BackgroundTransparency = 1
+			label.Text = "[Pet] " .. child.Name
+			label.TextColor3 = Color3.fromRGB(255, 255, 0)
+			label.TextStrokeTransparency = 0.5
+			label.TextScaled = true
+			label.Font = Enum.Font.SourceSansBold
+			label.Parent = billboard
+		end
 	end
 end)
