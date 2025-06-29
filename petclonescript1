@@ -1,0 +1,47 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+-- 変数：表示したいペット情報
+local petName = "FennecFox"  -- ReplicatedStorage内のModel名と一致させる
+local displayName = "Fennec Fox"
+local weight = 5.0
+local age = 12
+
+-- Slot9を取得
+local slot = player:WaitForChild("PlayerGui"):WaitForChild("Inventory"):FindFirstChild("Slot9")
+if not slot then
+	warn("Slot9 not found in Inventory UI")
+	return
+end
+
+-- 重さと年齢を表示
+local weightLabel = slot:FindFirstChild("WeightLabel")
+if weightLabel and weightLabel:IsA("TextLabel") then
+	weightLabel.Text = string.format("%.2f kg", weight)
+end
+
+local ageLabel = slot:FindFirstChild("AgeLabel")
+if ageLabel and ageLabel:IsA("TextLabel") then
+	ageLabel.Text = tostring(age)
+end
+
+-- ViewportFrame にモデルを表示
+local viewport = slot:FindFirstChildWhichIsA("ViewportFrame")
+if viewport then
+	viewport:ClearAllChildren()
+	local cam = Instance.new("Camera")
+	cam.Parent = viewport
+	viewport.CurrentCamera = cam
+
+	local petModel = ReplicatedStorage:FindFirstChild(petName)
+	if petModel then
+		local clone = petModel:Clone()
+		clone.Parent = viewport
+
+		local cf = clone:GetBoundingBox()
+		cam.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0, 8), cf.Position)
+	else
+		warn("Pet model '" .. petName .. "' not found in ReplicatedStorage")
+	end
+end
