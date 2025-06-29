@@ -78,11 +78,18 @@ MainSection:NewButton("Make Fennec Fox White", "Turn it white", function()
 end)
 
 -- インベントリに追加（見た目だけ）
-MainSection:NewButton("Add Fennec Fox to Inventory", "Clone a fox model into Backpack", function()
+MainSection:NewButton("Add Fennec Fox to Inventory", "Clone fox as Tool", function()
 	for _, model in ipairs(ReplicatedStorage:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("fennec") then
 			local clone = model:Clone()
-			clone.Parent = player:WaitForChild("Backpack")
+
+			-- ツールに変換
+			local tool = Instance.new("Tool")
+			tool.Name = "FennecFoxTool"
+			tool.RequiresHandle = false
+			tool.Parent = player.Backpack
+			clone.Parent = tool
+
 			break
 		end
 	end
