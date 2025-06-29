@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 -- 差し替え対象
-local petModelName = "FennecFox"
+local petModelName = "Fennec_Fox"
 local displayWeight = 5.00
 local displayAge = 12
 
