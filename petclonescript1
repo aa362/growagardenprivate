@@ -1,27 +1,2 @@
 local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
-
--- SetCore の準備ができるまで待つ
-local function waitForSetCore()
-	while true do
-		local success, _ = pcall(function()
-			game.StarterGui:SetCore("ChatMakeSystemMessage", {
-				Text = "✅ SetCore Ready",
-				Color = Color3.new(0, 1, 0)
-			})
-		end)
-		if success then break end
-		task.wait(0.2)
-	end
-end
-
-waitForSetCore()
-
--- ペット一覧を表示
-for _, petName in ipairs(Spawner.GetPets()) do
-	game.StarterGui:SetCore("ChatMakeSystemMessage", {
-		Text = "[Pet] " .. petName,
-		Color = Color3.fromRGB(255, 255, 0), -- 黄色
-		Font = Enum.Font.SourceSansBold,
-		FontSize = Enum.FontSize.Size24
-	})
-end
+Spawner.SpawnPet("Moon Cat", 5, 12)
