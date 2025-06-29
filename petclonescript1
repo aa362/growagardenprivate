@@ -2,46 +2,55 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- 変数：表示したいペット情報
-local petName = "FennecFox"  -- ReplicatedStorage内のModel名と一致させる
-local displayName = "Fennec Fox"
-local weight = 5.0
-local age = 12
+-- 差し替え対象
+local petModelName = "FennecFox"
+local displayWeight = 5.00
+local displayAge = 12
 
--- Slot9を取得
+-- Slot9 取得
 local slot = player:WaitForChild("PlayerGui"):WaitForChild("Inventory"):FindFirstChild("Slot9")
 if not slot then
-	warn("Slot9 not found in Inventory UI")
+	warn("Slot9 not found!")
 	return
 end
 
--- 重さと年齢を表示
-local weightLabel = slot:FindFirstChild("WeightLabel")
-if weightLabel and weightLabel:IsA("TextLabel") then
-	weightLabel.Text = string.format("%.2f kg", weight)
+-- TextLabel更新
+local weightLabel = slot:FindFirstChildWhichIsA("TextLabel", true)
+if weightLabel and weightLabel.Text:find("kg") then
+	weightLabel.Text = string.format("%.2f kg", displayWeight)
 end
 
-local ageLabel = slot:FindFirstChild("AgeLabel")
-if ageLabel and ageLabel:IsA("TextLabel") then
-	ageLabel.Text = tostring(age)
+local ageLabel = slot:FindFirstChildWhichIsA("TextLabel", true)
+if ageLabel and ageLabel.Text:find("Age") then
+	ageLabel.Text = tostring(displayAge)
 end
 
--- ViewportFrame にモデルを表示
+-- ViewportFrame表示処理
 local viewport = slot:FindFirstChildWhichIsA("ViewportFrame")
 if viewport then
 	viewport:ClearAllChildren()
+
 	local cam = Instance.new("Camera")
 	cam.Parent = viewport
 	viewport.CurrentCamera = cam
 
-	local petModel = ReplicatedStorage:FindFirstChild(petName)
-	if petModel then
-		local clone = petModel:Clone()
+	local modelTemplate = ReplicatedStorage:FindFirstChild(petModelName)
+	if modelTemplate and modelTemplate:IsA("Model") then
+		local clone = modelTemplate:Clone()
 		clone.Parent = viewport
 
+		-- PrimaryPartが無ければ自動設定
+		if not clone.PrimaryPart then
+			local root = clone:FindFirstChild("HumanoidRootPart") or clone:FindFirstChildWhichIsA("BasePart")
+			if root then
+				clone.PrimaryPart = root
+			end
+		end
+
+		-- カメラ調整
 		local cf = clone:GetBoundingBox()
 		cam.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0, 8), cf.Position)
 	else
-		warn("Pet model '" .. petName .. "' not found in ReplicatedStorage")
+		warn("Model '" .. petModelName .. "' not found in ReplicatedStorage.")
 	end
 end
