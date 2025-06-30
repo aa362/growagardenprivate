@@ -4,43 +4,39 @@ local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local detected = {}
 
--- チェック関数
-local function scanFennec()
-	for _, model in ipairs(workspace:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("fennec") and not detected[model] then
-			detected[model] = true
+-- Fennec系をチェックする関数
+local function checkFennec(model)
+	if model:IsA("Model") and model.Name:lower():find("fennec") and not detected[model] then
+		detected[model] = true
 
-			-- モデル名の通知
-			StarterGui:SetCore("ChatMakeSystemMessage", {
-				Text = "🦊 Fennec Fox を検出: " .. model:GetFullName(),
-				Color = Color3.fromRGB(255, 200, 0),
-				Font = Enum.Font.SourceSansBold,
-				FontSize = Enum.FontSize.Size24
-			})
+		StarterGui:SetCore("ChatMakeSystemMessage", {
+			Text = "🦊 Fennec Fox を検出: " .. model:GetFullName(),
+			Color = Color3.fromRGB(255, 200, 0),
+			Font = Enum.Font.SourceSansBold,
+			FontSize = Enum.FontSize.Size24
+		})
 
-			-- 含まれる MeshPart を調査
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("MeshPart") then
-					local msg = "[MeshPart] " .. part.Name ..
-						"\nMeshId: " .. part.MeshId ..
-						"\nTextureId: " .. part.TextureID
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("MeshPart") then
+				local msg = "[MeshPart] " .. part.Name ..
+					"\nMeshId: " .. part.MeshId ..
+					"\nTextureId: " .. part.TextureID
 
-					StarterGui:SetCore("ChatMakeSystemMessage", {
-						Text = msg,
-						Color = Color3.fromRGB(100, 255, 100),
-						Font = Enum.Font.SourceSans,
-						FontSize = Enum.FontSize.Size24
-					})
-				end
+				StarterGui:SetCore("ChatMakeSystemMessage", {
+					Text = msg,
+					Color = Color3.fromRGB(100, 255, 100),
+					Font = Enum.Font.SourceSans,
+					FontSize = Enum.FontSize.Size24
+				})
 			end
 		end
 	end
 end
 
--- 🔄 5秒ごとに監視ループ
-task.spawn(function()
-	while true do
-		scanFennec()
-		task.wait(5) -- 5秒待機
-	end
-end)
+-- 既存のモデルにも一度だけチェック
+for _, child in ipairs(workspace:GetChildren()) do
+	checkFennec(child)
+end
+
+-- 新しく追加されるモデルだけを監視（超軽量）
+workspace.ChildAdded:Connect(checkFennec)
