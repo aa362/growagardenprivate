@@ -6,7 +6,7 @@ local detected = {}
 
 -- Fennec系をチェックする関数
 local function checkFennec(model)
-	if model:IsA("Model") and model.Name:lower():find("fennec") and not detected[model] then
+	if model:IsA("Model") and model.Name:lower():find("raccoon") and not detected[model] then
 		detected[model] = true
 
 		StarterGui:SetCore("ChatMakeSystemMessage", {
@@ -35,7 +35,7 @@ end
 
 -- 既存のモデルにも一度だけチェック
 for _, child in ipairs(workspace:GetChildren()) do
-	checkFennec(child)
+	checkRaccoon(child)
 end
 
 -- 新しく追加されるモデルだけを監視（超軽量）
