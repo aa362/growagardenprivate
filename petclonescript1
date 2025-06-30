@@ -1,11 +1,13 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
 
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+local player = Players.LocalPlayer
+
+-- 検出済み重複防止
 local alreadySent = {}
 
--- キーワード（小文字）
+-- 対象ワード（小文字）
 local targetKeywords = { "raccoon", "fennec" }
 
 -- Webhook送信
@@ -21,13 +23,11 @@ local function sendWebhook(msg)
 			Headers = {["Content-Type"] = "application/json"},
 			Body = json
 		})
-	else
-		warn("❌ ExecutorがHTTP未対応")
 	end
 end
 
--- 対象名か調査
-local function isTargetName(name)
+-- 名前がキーワードを含むか確認
+local function isTarget(name)
 	name = name:lower()
 	for _, keyword in ipairs(targetKeywords) do
 		if name:find(keyword) then
@@ -37,28 +37,27 @@ local function isTargetName(name)
 	return false
 end
 
--- モデル全体をチェック（出現した瞬間に通知）
-local function checkModel(model)
-	if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
+-- MeshPartが追加されたとき、その親のモデルを検出
+local function onNewMeshPart(part)
+	if not part:IsA("MeshPart") then return end
+
+	local model = part:FindFirstAncestorOfClass("Model")
+	if model and isTarget(model.Name) and not alreadySent[model] then
 		alreadySent[model] = true
 
-		local msg = "🐾 **Pet Detected!**\nModel: `" .. model:GetFullName() .. "`"
-
-		local foundMesh = false
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("MeshPart") then
-				foundMesh = true
-				msg = msg ..
-					"\n\n🔹 Part: `" .. part.Name .. "`" ..
-					"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
-					"\n🎨 TextureId: `" .. part.TextureID .. "`"
-			end
-		end
-
-		if not foundMesh then
-			msg = msg .. "\n⚠️ MeshPart が見つかりませんでした。内部がModelかBlockかもしれません。"
-		end
+		local msg = "🐾 **Pet MeshPart Detected!**\nModel: `" .. model:GetFullName() .. "`" ..
+			"\n\n🔹 Part: `" .. part.Name .. "`" ..
+			"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
+			"\n🎨 TextureId: `" .. part.TextureID .. "`"
 
 		sendWebhook(msg)
 	end
 end
+
+-- 起動時すでにあるものも調べる
+for _, part in ipairs(workspace:GetDescendants()) do
+	onNewMeshPart(part)
+end
+
+-- 新規追加を監視
+workspace.DescendantAdded:Connect(onNewMeshPart)
