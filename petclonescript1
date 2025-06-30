@@ -1,6 +1,4 @@
 local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
 Spawner.SpawnPet("Raccoon", 5, 12)
-Spawner.SpawnPet("Raccoon", 5, 12)
-Spawner.SpawnPet("Fox", 5, 12)
-Spawner.SpawnPet("Fennec", 5, 12)
+Spawner.SpawnPet("SilverMonkey", 5, 12)
 Spawner.Load()
