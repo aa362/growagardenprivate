@@ -1,66 +1,21 @@
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
 
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
-local alreadySent = {}
+local data = {
+    ["content"] = "📡 Webhook テスト送信 - このメッセージが来たら http.request 成功"
+}
 
--- 検出ワード（小文字）
-local targetKeywords = { "raccoon", "fennec" }
+local json = HttpService:JSONEncode(data)
 
--- Webhook送信
-local function sendWebhook(msg)
-	local data = {["content"] = msg}
-	local json = HttpService:JSONEncode(data)
-
-	local request = http and http.request or request or http_request
-	if request then
-		request({
-			Url = WebhookURL,
-			Method = "POST",
-			Headers = {["Content-Type"] = "application/json"},
-			Body = json
-		})
-		print("✅ Webhook送信:", msg)
-	else
-		warn("❌ Executorが http.request 非対応")
-	end
-end
-
--- 名前チェック
-local function isTargetName(name)
-	name = name:lower()
-	for _, keyword in ipairs(targetKeywords) do
-		if name:find(keyword) then
-			return true
-		end
-	end
-	return false
-end
-
--- 検出ルーチン
-local function scanForPets()
-	for _, model in ipairs(workspace:GetDescendants()) do
-		if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
-			alreadySent[model] = true
-
-			local msg = "🐾 **Pet Detected by Scan!**\nModel: `" .. model:GetFullName() .. "`"
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("MeshPart") then
-					msg = msg ..
-						"\n\n🔹 Part: `" .. part.Name .. "`" ..
-						"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
-						"\n🎨 TextureId: `" .. part.TextureID .. "`"
-				end
-			end
-			sendWebhook(msg)
-		end
-	end
-end
-
--- 5秒ごとに確認（CPU負荷低）
-while true do
-	task.wait(5)
-	scanForPets()
+local request = http and http.request or request or http_request
+if request then
+    request({
+        Url = WebhookURL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = json
+    })
+    print("✅ Webhook送信 成功")
+else
+    warn("❌ Executor が http.request 非対応")
 end
