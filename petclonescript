@@ -1,11 +1,3 @@
-local Workspace = game:GetService("Workspace")
-
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if model:IsA("Model") and model.Name:lower():find("red dragon") then
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Color = Color3.fromRGB(0, 100, 255) -- 青色（自由に変更可）
-			end
-		end
-	end
-end
+local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
+Spawner.SpawnPet("Raccoon", 1, 2)
+Spawner.Load()
