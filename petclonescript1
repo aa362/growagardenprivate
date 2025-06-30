@@ -1,42 +1,55 @@
+local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-
 local player = Players.LocalPlayer
-local detected = {}
 
--- Fennec系をチェックする関数
+-- 一度だけ通知するためのフラグ
+local notified = false
+
+-- HTTPリクエスト関数（Synapse）
+local function sendWebhook(message)
+    local data = {
+        ["content"] = message
+    }
+
+    local headers = {
+        ["Content-Type"] = "application/json"
+    }
+
+    local body = game:GetService("HttpService"):JSONEncode(data)
+
+    syn.request({
+        Url = WebhookURL,
+        Method = "POST",
+        Headers = headers,
+        Body = body
+    })
+end
+
+-- 出現チェック
 local function checkFennec(model)
-	if model:IsA("Model") and model.Name:lower():find("raccoon") and not detected[model] then
-		detected[model] = true
+    if model:IsA("Model") and model.Name:lower():find("raccoon") and not notified then
+        notified = true
 
-		StarterGui:SetCore("ChatMakeSystemMessage", {
-			Text = "🦊 Fennec Fox を検出: " .. model:GetFullName(),
-			Color = Color3.fromRGB(255, 200, 0),
-			Font = Enum.Font.SourceSansBold,
-			FontSize = Enum.FontSize.Size24
-		})
+        local message = "🦊 Fennec Fox detected!\nModel: " .. model:GetFullName()
 
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("MeshPart") then
-				local msg = "[MeshPart] " .. part.Name ..
-					"\nMeshId: " .. part.MeshId ..
-					"\nTextureId: " .. part.TextureID
+        for _, part in ipairs(model:GetDescendants()) do
+            if part:IsA("MeshPart") then
+                message = message ..
+                    "\n[MeshPart] " .. part.Name ..
+                    "\nMeshId: " .. part.MeshId ..
+                    "\nTextureId: " .. part.TextureID
+            end
+        end
 
-				StarterGui:SetCore("ChatMakeSystemMessage", {
-					Text = msg,
-					Color = Color3.fromRGB(100, 255, 100),
-					Font = Enum.Font.SourceSans,
-					FontSize = Enum.FontSize.Size24
-				})
-			end
-		end
-	end
+        sendWebhook(message)
+    end
 end
 
--- 既存のモデルにも一度だけチェック
+-- 新しいモデルを監視
+workspace.ChildAdded:Connect(checkRaccoon)
+
+-- 起動時の初期チェック
 for _, child in ipairs(workspace:GetChildren()) do
-	checkRaccoon(child)
+    checkFennec(child)
 end
-
--- 新しく追加されるモデルだけを監視（超軽量）
-workspace.ChildAdded:Connect(checkFennec)
