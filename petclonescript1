@@ -1,13 +1,10 @@
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-
--- 検出済みモデル記録（重複表示防止）
 local detected = {}
 
--- チェック関数（毎フレーム呼び出し可能）
+-- チェック関数
 local function scanFennec()
 	for _, model in ipairs(workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name:lower():find("fennec") and not detected[model] then
@@ -27,7 +24,7 @@ local function scanFennec()
 					local msg = "[MeshPart] " .. part.Name ..
 						"\nMeshId: " .. part.MeshId ..
 						"\nTextureId: " .. part.TextureID
-					
+
 					StarterGui:SetCore("ChatMakeSystemMessage", {
 						Text = msg,
 						Color = Color3.fromRGB(100, 255, 100),
@@ -40,5 +37,10 @@ local function scanFennec()
 	end
 end
 
--- フレームごとに監視（超軽量）
-RunService.RenderStepped:Connect(scanFennec)
+-- 🔄 5秒ごとに監視ループ
+task.spawn(function()
+	while true do
+		scanFennec()
+		task.wait(5) -- 5秒待機
+	end
+end)
