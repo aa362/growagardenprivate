@@ -1,55 +1,19 @@
-local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+local HttpService = game:GetService("HttpService")
+local url = "https://discord.com/api/webhooks/ここにWebhookURL"
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local data = {
+    ["content"] = "✅ Webhook テスト送信成功！"
+}
+local body = HttpService:JSONEncode(data)
 
--- 一度だけ通知するためのフラグ
-local notified = false
-
--- HTTPリクエスト関数（Synapse）
-local function sendWebhook(message)
-    local data = {
-        ["content"] = message
-    }
-
-    local headers = {
-        ["Content-Type"] = "application/json"
-    }
-
-    local body = game:GetService("HttpService"):JSONEncode(data)
-
-    syn.request({
-        Url = WebhookURL,
+local requestFunc = syn and syn.request or http and http.request or http_request
+if requestFunc then
+    requestFunc({
+        Url = url,
         Method = "POST",
-        Headers = headers,
+        Headers = {["Content-Type"] = "application/json"},
         Body = body
     })
-end
-
--- 出現チェック
-local function checkFennec(model)
-    if model:IsA("Model") and model.Name:lower():find("raccoon") and not notified then
-        notified = true
-
-        local message = "🦊 Fennec Fox detected!\nModel: " .. model:GetFullName()
-
-        for _, part in ipairs(model:GetDescendants()) do
-            if part:IsA("MeshPart") then
-                message = message ..
-                    "\n[MeshPart] " .. part.Name ..
-                    "\nMeshId: " .. part.MeshId ..
-                    "\nTextureId: " .. part.TextureID
-            end
-        end
-
-        sendWebhook(message)
-    end
-end
-
--- 新しいモデルを監視
-workspace.ChildAdded:Connect(checkRaccoon)
-
--- 起動時の初期チェック
-for _, child in ipairs(workspace:GetChildren()) do
-    checkFennec(child)
+else
+    warn("❌ このExecutorではWebhookが使えません。")
 end
