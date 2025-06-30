@@ -1,29 +1,51 @@
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
--- 👇 あなたの Discord Webhook URL をここに貼り付けてください（"で囲む）
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+local player = Players.LocalPlayer
+local alreadySent = {}
 
--- 送信するメッセージ内容
-local message = {
-	["content"] = "✅ KrnlからのWebhook送信テスト成功！"
-}
+-- Webhook通知関数（Krnl 用）
+local function sendWebhook(msg)
+	local data = {["content"] = msg}
+	local json = HttpService:JSONEncode(data)
 
--- JSONに変換
-local jsonData = HttpService:JSONEncode(message)
-
--- Krnl専用：http.request を使用
-local request = http and http.request or request or http_request
-
-if request then
-	local response = request({
-		Url = WebhookURL,
-		Method = "POST",
-		Headers = {
-			["Content-Type"] = "application/json"
-		},
-		Body = jsonData
-	})
-	print("✅ Webhook送信完了！ ステータス: ", response.StatusCode)
-else
-	warn("❌ このExecutorではHTTPリクエストが使用できません（Krnl以外の可能性あり）")
+	local request = http and http.request or request or http_request
+	if request then
+		request({
+			Url = WebhookURL,
+			Method = "POST",
+			Headers = {["Content-Type"] = "application/json"},
+			Body = json
+		})
+	else
+		warn("❌ このExecutorではHTTPリクエストが使えません")
+	end
 end
+
+-- Fennec Fox 検出処理
+local function checkRaccoon(model)
+	if model:IsA("Model") and model.Name:lower():find("raccoon") and not alreadySent[model] then
+		alreadySent[model] = true
+
+		local msg = "🦊 **Fennec Fox検出！**\nModel: `" .. model:GetFullName() .. "`"
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("MeshPart") then
+				msg = msg ..
+					"\n\n🔹 Part: `" .. part.Name .. "`" ..
+					"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
+					"\n🎨 TextureId: `" .. part.TextureID .. "`"
+			end
+		end
+
+		sendWebhook(msg)
+	end
+end
+
+-- 起動時にすでに出ている場合も確認
+for _, obj in ipairs(workspace:GetChildren()) do
+	checkRaccoon(obj)
+end
+
+-- 出現監視（軽量）
+workspace.ChildAdded:Connect(checkRaccoon)
