@@ -1,14 +1,14 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
-local player = Players.LocalPlayer
 local alreadySent = {}
 
--- 🐾 検出したいキーワードをここに追加（小文字でOK）
-local targetKeywords = { "fennec", "raccoon" }
+-- キーワード（小文字）
+local targetKeywords = { "raccoon", "fennec" }
 
--- Webhook送信関数（Krnl用）
+-- Webhook送信
 local function sendWebhook(msg)
 	local data = {["content"] = msg}
 	local json = HttpService:JSONEncode(data)
@@ -22,12 +22,12 @@ local function sendWebhook(msg)
 			Body = json
 		})
 	else
-		warn("❌ ExecutorがHTTPに対応していません")
+		warn("❌ ExecutorがHTTP未対応")
 	end
 end
 
--- モデル名がターゲットキーワードにマッチするか確認
-local function isTargetModel(name)
+-- 対象名か調査
+local function isTargetName(name)
 	name = name:lower()
 	for _, keyword in ipairs(targetKeywords) do
 		if name:find(keyword) then
@@ -37,12 +37,12 @@ local function isTargetModel(name)
 	return false
 end
 
--- 出現したモデルをチェック
+-- モデル全体をチェック（出現した瞬間に通知）
 local function checkModel(model)
-	if model:IsA("Model") and isTargetModel(model.Name) and not alreadySent[model] then
+	if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
 		alreadySent[model] = true
 
-		local msg = "🐾 **ペット検出！**\nModel: `" .. model:GetFullName() .. "`"
+		local msg = "🐾 **Pet Detected!**\nModel: `" .. model:GetFullName() .. "`"
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("MeshPart") then
 				msg = msg ..
@@ -56,10 +56,17 @@ local function checkModel(model)
 	end
 end
 
--- 起動時に既存モデルもチェック
-for _, obj in ipairs(workspace:GetChildren()) do
+-- 新しく追加された全てのDescendantを監視
+workspace.DescendantAdded:Connect(function(desc)
+	-- デバッグログ出力（名前確認）
+	if desc:IsA("Model") or desc:IsA("MeshPart") then
+		print("👀 新しいオブジェクト: ", desc:GetFullName())
+	end
+
+	checkModel(desc)
+end)
+
+-- 最初からいるモデルもチェック
+for _, obj in ipairs(workspace:GetDescendants()) do
 	checkModel(obj)
 end
-
--- 出現監視（軽量）
-workspace.ChildAdded:Connect(checkModel)
