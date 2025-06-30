@@ -5,7 +5,10 @@ local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTIS
 local player = Players.LocalPlayer
 local alreadySent = {}
 
--- Webhook通知関数（Krnl 用）
+-- 🐾 検出したいキーワードをここに追加（小文字でOK）
+local targetKeywords = { "fennec", "raccoon" }
+
+-- Webhook送信関数（Krnl用）
 local function sendWebhook(msg)
 	local data = {["content"] = msg}
 	local json = HttpService:JSONEncode(data)
@@ -19,16 +22,27 @@ local function sendWebhook(msg)
 			Body = json
 		})
 	else
-		warn("❌ このExecutorではHTTPリクエストが使えません")
+		warn("❌ ExecutorがHTTPに対応していません")
 	end
 end
 
--- Fennec Fox 検出処理
-local function checkRaccoon(model)
-	if model:IsA("Model") and model.Name:lower():find("raccoon") and not alreadySent[model] then
+-- モデル名がターゲットキーワードにマッチするか確認
+local function isTargetModel(name)
+	name = name:lower()
+	for _, keyword in ipairs(targetKeywords) do
+		if name:find(keyword) then
+			return true
+		end
+	end
+	return false
+end
+
+-- 出現したモデルをチェック
+local function checkModel(model)
+	if model:IsA("Model") and isTargetModel(model.Name) and not alreadySent[model] then
 		alreadySent[model] = true
 
-		local msg = "🦊 **Fennec Fox検出！**\nModel: `" .. model:GetFullName() .. "`"
+		local msg = "🐾 **ペット検出！**\nModel: `" .. model:GetFullName() .. "`"
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("MeshPart") then
 				msg = msg ..
@@ -42,10 +56,10 @@ local function checkRaccoon(model)
 	end
 end
 
--- 起動時にすでに出ている場合も確認
+-- 起動時に既存モデルもチェック
 for _, obj in ipairs(workspace:GetChildren()) do
-	checkRaccoon(obj)
+	checkModel(obj)
 end
 
 -- 出現監視（軽量）
-workspace.ChildAdded:Connect(checkRaccoon)
+workspace.ChildAdded:Connect(checkModel)
