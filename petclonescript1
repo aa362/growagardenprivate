@@ -1,16 +1,14 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-
-local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
 local player = Players.LocalPlayer
 
--- 検出済み重複防止
+local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
 local alreadySent = {}
 
--- 対象ワード（小文字）
+-- 🔎 対象キーワード（完全小文字）
 local targetKeywords = { "raccoon", "fennec" }
 
--- Webhook送信
+-- ✅ Webhook送信関数（+ print）
 local function sendWebhook(msg)
 	local data = {["content"] = msg}
 	local json = HttpService:JSONEncode(data)
@@ -23,41 +21,65 @@ local function sendWebhook(msg)
 			Headers = {["Content-Type"] = "application/json"},
 			Body = json
 		})
+		print("✅ Webhook送信:", msg)
+	else
+		warn("❌ ExecutorがHTTP未対応")
 	end
 end
 
--- 名前がキーワードを含むか確認
-local function isTarget(name)
-	name = name:lower()
+-- 🔍 ターゲット判定（名前＋親も見る）
+local function isTargetModel(model)
+	if not model or not model:IsA("Model") then return false end
+	local name = model.Name:lower()
+
 	for _, keyword in ipairs(targetKeywords) do
 		if name:find(keyword) then
 			return true
 		end
 	end
+
+	-- 親の名前まで確認（例: Handleの親がRaccoon）
+	local parent = model.Parent
+	if parent and parent:IsA("Model") then
+		local pname = parent.Name:lower()
+		for _, keyword in ipairs(targetKeywords) do
+			if pname:find(keyword) then
+				return true
+			end
+		end
+	end
+
 	return false
 end
 
--- MeshPartが追加されたとき、その親のモデルを検出
-local function onNewMeshPart(part)
-	if not part:IsA("MeshPart") then return end
+-- 🔁 出現監視対象（MeshPartが出たときに親を確認）
+local function onNewDescendant(desc)
+	if desc:IsA("MeshPart") then
+		local model = desc:FindFirstAncestorOfClass("Model")
+		if model and not alreadySent[model] and isTargetModel(model) then
+			alreadySent[model] = true
 
-	local model = part:FindFirstAncestorOfClass("Model")
-	if model and isTarget(model.Name) and not alreadySent[model] then
-		alreadySent[model] = true
+			local msg = "🐾 **Pet MeshPart Detected!**\nModel: `" .. model:GetFullName() .. "`" ..
+				"\n\n🔹 Part: `" .. desc.Name .. "`" ..
+				"\n🔸 MeshId: `" .. desc.MeshId .. "`" ..
+				"\n🎨 TextureId: `" .. desc.TextureID .. "`"
 
-		local msg = "🐾 **Pet MeshPart Detected!**\nModel: `" .. model:GetFullName() .. "`" ..
-			"\n\n🔹 Part: `" .. part.Name .. "`" ..
-			"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
-			"\n🎨 TextureId: `" .. part.TextureID .. "`"
+			sendWebhook(msg)
+		else
+			print("⚠️ 無視されたMeshPart: ", desc:GetFullName())
+		end
+	end
 
-		sendWebhook(msg)
+	-- デバッグ用：すべての出現オブジェクトをログに出す
+	if desc:IsA("Model") or desc:IsA("MeshPart") then
+		print("👀 出現: ", desc:GetFullName())
 	end
 end
 
--- 起動時すでにあるものも調べる
-for _, part in ipairs(workspace:GetDescendants()) do
-	onNewMeshPart(part)
+-- 🔧 起動時の既存も調査
+for _, obj in ipairs(workspace:GetDescendants()) do
+	onNewDescendant(obj)
 end
 
--- 新規追加を監視
-workspace.DescendantAdded:Connect(onNewMeshPart)
+-- ✅ 新規出現を監視（軽量で確実）
+workspace.DescendantAdded:Connect(onNewDescendant)
