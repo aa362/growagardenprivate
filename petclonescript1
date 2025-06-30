@@ -1,21 +1,72 @@
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
-local data = {
-    ["content"] = "📡 Webhook テスト送信 - このメッセージが来たら http.request 成功"
-}
+local alreadySent = {}
 
-local json = HttpService:JSONEncode(data)
+-- キーワード（小文字）
+local targetKeywords = { "raccoon", "fennec" }
 
-local request = http and http.request or request or http_request
-if request then
-    request({
-        Url = WebhookURL,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = json
-    })
-    print("✅ Webhook送信 成功")
-else
-    warn("❌ Executor が http.request 非対応")
+-- Webhook送信
+local function sendWebhook(msg)
+	local data = {["content"] = msg}
+	local json = HttpService:JSONEncode(data)
+
+	local request = http and http.request or request or http_request
+	if request then
+		request({
+			Url = WebhookURL,
+			Method = "POST",
+			Headers = {["Content-Type"] = "application/json"},
+			Body = json
+		})
+	else
+		warn("❌ ExecutorがHTTP未対応")
+	end
+end
+
+-- 対象名か調査
+local function isTargetName(name)
+	name = name:lower()
+	for _, keyword in ipairs(targetKeywords) do
+		if name:find(keyword) then
+			return true
+		end
+	end
+	return false
+end
+
+-- モデル全体をチェック（出現した瞬間に通知）
+local function checkModel(model)
+	if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
+		alreadySent[model] = true
+
+		local msg = "🐾 **Pet Detected!**\nModel: `" .. model:GetFullName() .. "`"
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("MeshPart") then
+				msg = msg ..
+					"\n\n🔹 Part: `" .. part.Name .. "`" ..
+					"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
+					"\n🎨 TextureId: `" .. part.TextureID .. "`"
+			end
+		end
+
+		sendWebhook(msg)
+	end
+end
+
+-- 新しく追加された全てのDescendantを監視
+workspace.DescendantAdded:Connect(function(desc)
+	-- デバッグログ出力（名前確認）
+	if desc:IsA("Model") or desc:IsA("MeshPart") then
+		print("👀 新しいオブジェクト: ", desc:GetFullName())
+	end
+
+	checkModel(desc)
+end)
+
+-- 最初からいるモデルもチェック
+for _, obj in ipairs(workspace:GetDescendants()) do
+	checkModel(obj)
 end
