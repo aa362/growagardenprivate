@@ -1,19 +1,30 @@
+local url = "https://discord.com/api/webhooks/https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
 local HttpService = game:GetService("HttpService")
-local url = "https://discord.com/api/webhooks/ここにWebhookURL"
 
 local data = {
-    ["content"] = "✅ Webhook テスト送信成功！"
+	["content"] = "✅ Webhookテスト成功！"
 }
 local body = HttpService:JSONEncode(data)
 
-local requestFunc = syn and syn.request or http and http.request or http_request
-if requestFunc then
-    requestFunc({
-        Url = url,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = body
-    })
+local request = syn and syn.request or http and http.request or http_request
+
+if request then
+	local success, response = pcall(function()
+		return request({
+			Url = url,
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json"
+			},
+			Body = body
+		})
+	end)
+
+	if success then
+		print("✅ Webhook送信成功！")
+	else
+		warn("❌ Webhook送信失敗: " .. tostring(response))
+	end
 else
-    warn("❌ このExecutorではWebhookが使えません。")
+	warn("❌ このExecutorではWebhookリクエストが使えません。")
 end
