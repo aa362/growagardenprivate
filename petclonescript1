@@ -1,7 +1,7 @@
 local HttpService = game:GetService("HttpService")
 
 -- 👇 あなたの Discord Webhook URL をここに貼り付けてください（"で囲む）
-local WebhookURL = "https://discord.com/api/webhooks/https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
 
 -- 送信するメッセージ内容
 local message = {
