@@ -43,8 +43,11 @@ local function checkModel(model)
 		alreadySent[model] = true
 
 		local msg = "🐾 **Pet Detected!**\nModel: `" .. model:GetFullName() .. "`"
+
+		local foundMesh = false
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("MeshPart") then
+				foundMesh = true
 				msg = msg ..
 					"\n\n🔹 Part: `" .. part.Name .. "`" ..
 					"\n🔸 MeshId: `" .. part.MeshId .. "`" ..
@@ -52,21 +55,10 @@ local function checkModel(model)
 			end
 		end
 
+		if not foundMesh then
+			msg = msg .. "\n⚠️ MeshPart が見つかりませんでした。内部がModelかBlockかもしれません。"
+		end
+
 		sendWebhook(msg)
 	end
-end
-
--- 新しく追加された全てのDescendantを監視
-workspace.DescendantAdded:Connect(function(desc)
-	-- デバッグログ出力（名前確認）
-	if desc:IsA("Model") or desc:IsA("MeshPart") then
-		print("👀 新しいオブジェクト: ", desc:GetFullName())
-	end
-
-	checkModel(desc)
-end)
-
--- 最初からいるモデルもチェック
-for _, obj in ipairs(workspace:GetDescendants()) do
-	checkModel(obj)
 end
