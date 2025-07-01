@@ -1,11 +1,15 @@
-local Workspace = game:GetService("Workspace")
-
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if model:IsA("Model") and model.Name:lower():find("red dragon") then
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Color = Color3.new(0, 0, 0) -- 真っ黒
+local function makeDragonsBlack(parent)
+	for _, model in ipairs(parent:GetDescendants()) do
+		if model:IsA("Model") and model.Name:lower():find("red dragon") then
+			for _, part in ipairs(model:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.Color = Color3.new(0, 0, 0)
+				end
 			end
 		end
 	end
 end
+
+-- Workspace全体、ReplicatedStorageも対象にする場合はこう
+makeDragonsBlack(game.Workspace)
+makeDragonsBlack(game.ReplicatedStorage) 
