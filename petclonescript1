@@ -1,46 +1,68 @@
 local Workspace = game:GetService("Workspace")
 
--- 少し明るい黒（グレー寄り）
-local SOFT_BLACK = Color3.new(0.1, 0.1, 0.1)
+-- やや明るめの黒
+local SOFT_BLACK = Color3.fromRGB(25, 25, 25)
 
--- 煙を追加する関数（どこか1パーツに付ける）
-local function addSmokeToAnyPart(model)
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") and not part:FindFirstChild("DragonSmoke") then
-			local smoke = Instance.new("Smoke")
-			smoke.Name = "DragonSmoke"
-			smoke.Color = Color3.new(0.5, 0.5, 0.5)
-			smoke.Opacity = 0.4
-			smoke.RiseVelocity = 2
-			smoke.Size = 4
-			smoke.Enabled = true
-			smoke.Parent = part
-			break -- 最初のパーツにだけ煙追加
-		end
+-- 2D風アニメ煙（ParticleEmitter）を追加
+local function addCartoonSmoke(part)
+	if part:IsA("BasePart") and not part:FindFirstChild("CartoonSmoke") then
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Name = "CartoonSmoke"
+		emitter.Texture = "rbxassetid://771221224" -- 2D煙っぽいテクスチャ
+		emitter.Rate = 10
+		emitter.Lifetime = NumberRange.new(1.5, 2)
+		emitter.Speed = NumberRange.new(0.5, 1)
+		emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(1, 2)
+		})
+		emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		emitter.Color = ColorSequence.new(Color3.new(0.5, 0.5, 0.5))
+		emitter.Rotation = NumberRange.new(0, 360)
+		emitter.RotSpeed = NumberRange.new(-30, 30)
+		emitter.LockedToPart = true
+		emitter.LightInfluence = 0
+		emitter.Parent = part
 	end
 end
 
--- Dragon を処理する（色と煙）
+-- ドラゴンを黒く＆煙を追加（複数のBasePartに対応）
 local function styleDragon(model)
 	if model:IsA("Model") and model.Name == "Red Dragon" then
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("BasePart") then
 				part.Color = SOFT_BLACK
+				if part.Name:lower():find("head") or part.Name:lower():find("body") then
+					addCartoonSmoke(part)
+				end
 			end
 		end
-		addSmokeToAnyPart(model)
 	end
 end
 
--- 初期に存在するものも対応
+-- すでにあるドラゴンにも対応
 for _, obj in ipairs(Workspace:GetDescendants()) do
 	styleDragon(obj)
 end
 
--- 庭に置いた時にも反応（モデルの中に追加されたときも）
+-- ドラゴンが出現 or 構成変更されたときに対応
 Workspace.DescendantAdded:Connect(function(desc)
 	local model = desc:FindFirstAncestorWhichIsA("Model")
 	if model and model.Name == "Red Dragon" then
-		styleDragon(model)
+		task.defer(function() -- 構造が整ってから処理
+			styleDragon(model)
+		end)
+	end
+end)
+
+-- 新しいモデル自体が追加されたときも対応
+Workspace.ChildAdded:Connect(function(child)
+	if child:IsA("Model") and child.Name == "Red Dragon" then
+		task.defer(function()
+			styleDragon(child)
+		end)
 	end
 end)
