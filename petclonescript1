@@ -1,15 +1,42 @@
-local function makeDragonsBlack(parent)
-	for _, model in ipairs(parent:GetDescendants()) do
-		if model:IsA("Model") and model.Name:lower():find("red dragon") then
-			for _, part in ipairs(model:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.Color = Color3.new(0, 0, 0)
-				end
+local Workspace = game:GetService("Workspace")
+
+-- 🔥 煙を追加
+local function addSmokeToDragon(model)
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and part.Name:lower() == "head" then
+			if not part:FindFirstChild("DragonSmoke") then
+				local smoke = Instance.new("Smoke")
+				smoke.Name = "DragonSmoke"
+				smoke.Color = Color3.new(0.4, 0.4, 0.4)
+				smoke.Opacity = 0.5
+				smoke.RiseVelocity = 3
+				smoke.Size = 5
+				smoke.Enabled = true
+				smoke.Parent = part
 			end
 		end
 	end
 end
 
--- Workspace全体、ReplicatedStorageも対象にする場合はこう
-makeDragonsBlack(game.Workspace)
-makeDragonsBlack(game.ReplicatedStorage) 
+-- 🎯 Red Dragonだけ真っ黒に＆煙追加
+local function processRedDragon(model)
+	if model:IsA("Model") and model.Name == "Red Dragon" then
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.new(0, 0, 0)
+			end
+		end
+		addSmokeToDragon(model)
+	end
+end
+
+-- 🟡 既に存在しているRed Dragonにも適用
+for _, obj in ipairs(Workspace:GetDescendants()) do
+	processRedDragon(obj)
+end
+
+-- 🟢 今後出現するRed Dragonも対応
+Workspace.ChildAdded:Connect(function(child)
+	task.wait(0.5)
+	processRedDragon(child)
+end)
