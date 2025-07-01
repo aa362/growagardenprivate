@@ -1,88 +1,11 @@
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
 
--- あなたのWebhook URLをここに入力（※変更しないでOK）
-local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
-
--- Webhook送信関数
-local function sendWebhook(message)
-	local data = {["content"] = message}
-	local jsonData = HttpService:JSONEncode(data)
-
-	local request = http and http.request or request or http_request
-	if request then
-		request({
-			Url = WebhookURL,
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json"
-			},
-			Body = jsonData
-		})
-		print("✅ Discord通知送信済み")
-	else
-		warn("❌ ExecutorがHTTPリクエスト非対応")
-	end
-end
-
--- rbxassetid だけを抽出
-local function extractId(assetUrl)
-	return assetUrl:match("rbxassetid://(%d+)")
-end
-
--- メイン処理
-local function extractHeldToolMeshInfo()
-	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
-	if not tool then
-		warn("❌ 手に持っているツールが見つかりません")
-		return
-	end
-
-	local handle = tool:FindFirstChild("Handle")
-	if not handle then
-		warn("❌ Handleが見つかりません")
-		return
-	end
-
-	local msg = "🧪 **Tool Mesh Info**\n🔧 Tool: `" .. tool.Name .. "`"
-
-	if handle:IsA("MeshPart") then
-		local meshId = handle.MeshId or "なし"
-		local textureId = handle.TextureID or "なし"
-		local meshAssetId = extractId(meshId)
-		local textureAssetId = extractId(textureId)
-
-		msg = msg ..
-			"\n\n🧩 MeshPart: `" .. handle.Name .. "`" ..
-			"\n🔸 MeshId: `" .. meshId .. "`" ..
-			(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
-			"\n🎨 TextureId: `" .. textureId .. "`" ..
-			(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-
-	elseif handle:IsA("Part") then
-		local mesh = handle:FindFirstChildOfClass("SpecialMesh")
-		if mesh then
-			local meshId = mesh.MeshId or "なし"
-			local textureId = mesh.TextureId or "なし"
-			local meshAssetId = extractId(meshId)
-			local textureAssetId = extractId(textureId)
-
-			msg = msg ..
-				"\n\n🧩 SpecialMesh in Part: `" .. handle.Name .. "`" ..
-				"\n🔸 MeshId: `" .. meshId .. "`" ..
-				(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
-				"\n🎨 TextureId: `" .. textureId .. "`" ..
-				(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-		else
-			msg = msg .. "\n⚠️ SpecialMesh が見つかりません"
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if model:IsA("Model") and model.Name:lower():find("red dragon") then
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.new(0, 0, 0) -- 真っ黒
+			end
 		end
-	else
-		msg = msg .. "\n⚠️ Handle が MeshPart または SpecialMesh を持つ Part ではありません"
 	end
-
-	sendWebhook(msg)
 end
-
--- 実行
-extractHeldToolMeshInfo()
