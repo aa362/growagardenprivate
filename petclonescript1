@@ -1,11 +1,20 @@
 local HttpService = game:GetService("HttpService")
-local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
-local alreadySent = {}
-local targetKeywords = { "raccoon", "fennec" }
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
+-- 必要に応じてWebhookを使う（空ならコンソール出力のみ）
+local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
+
+-- Webhook送信関数
 local function sendWebhook(msg)
+	if WebhookURL == "" then
+		warn("❌ Webhook URL 未設定: ", msg)
+		return
+	end
+
 	local data = {["content"] = msg}
 	local json = HttpService:JSONEncode(data)
+
 	local request = http and http.request or request or http_request
 	if request then
 		request({
@@ -20,81 +29,65 @@ local function sendWebhook(msg)
 	end
 end
 
-local function isTargetName(name)
-	name = name:lower()
-	for _, keyword in ipairs(targetKeywords) do
-		if name:find(keyword) then
-			return true
-		end
-	end
-	return false
-end
-
-local function parsePetInfo(name)
-	local kg = name:match("%[([%d%.]+) KG%]")
-	local age = name:match("%[Age (%d+)%]")
-	return kg or "?", age or "?"
-end
-
+-- ID抽出
 local function extractId(assetUrl)
 	return assetUrl:match("rbxassetid://(%d+)")
 end
 
-local function processPetModel(model)
-	if alreadySent[model] then return end
-	alreadySent[model] = true
+-- メイン処理
+local function extractFromTool()
+	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	if not tool then
+		warn("❌ 手にツールを持っていません")
+		return
+	end
 
-	local kg, age = parsePetInfo(model.Name)
-	local msg = "🦴 **Pet Detected!**\n📦 Model: `" .. model:GetFullName() .. "`"
-	msg = msg .. "\n⚖️ Weight: `" .. kg .. " KG`" .. "\n🎂 Age: `" .. age .. "`"
+	local handle = tool:FindFirstChild("Handle")
+	if not handle then
+		warn("❌ Handleが見つかりません")
+		return
+	end
 
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("MeshPart") then
-			local meshId = part.MeshId or ""
-			local textureId = part.TextureID or ""
+	local msg = "🔍 **Tool Mesh Info**\n🎒 Tool: `" .. tool.Name .. "`"
+
+	if handle:IsA("MeshPart") then
+		local meshId = handle.MeshId or "なし"
+		local textureId = handle.TextureID or "なし"
+		local meshAssetId = extractId(meshId)
+		local textureAssetId = extractId(textureId)
+
+		msg = msg ..
+			"\n\n🧩 Handle (MeshPart)" ..
+			"\n🔸 MeshId: `" .. meshId .. "`" ..
+			(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
+			"\n🎨 TextureId: `" .. textureId .. "`" ..
+			(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
+
+	elseif handle:IsA("Part") then
+		local mesh = handle:FindFirstChildOfClass("SpecialMesh")
+		if mesh then
+			local meshId = mesh.MeshId or "なし"
+			local textureId = mesh.TextureId or "なし"
 			local meshAssetId = extractId(meshId)
 			local textureAssetId = extractId(textureId)
 
 			msg = msg ..
-				"\n\n🧩 MeshPart: `" .. part.Name .. "`" ..
+				"\n\n🧩 Handle (SpecialMesh)" ..
 				"\n🔸 MeshId: `" .. meshId .. "`" ..
 				(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
 				"\n🎨 TextureId: `" .. textureId .. "`" ..
 				(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-		elseif part:IsA("Part") then
-			local mesh = part:FindFirstChildOfClass("SpecialMesh")
-			if mesh then
-				local meshId = mesh.MeshId or ""
-				local textureId = mesh.TextureId or ""
-				local meshAssetId = extractId(meshId)
-				local textureAssetId = extractId(textureId)
-
-				msg = msg ..
-					"\n\n🧩 SpecialMesh in Part: `" .. part.Name .. "`" ..
-					"\n🔸 MeshId: `" .. meshId .. "`" ..
-					(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
-					"\n🎨 TextureId: `" .. textureId .. "`" ..
-					(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-			end
+		else
+			msg = msg .. "\n⚠️ SpecialMesh が存在しません"
 		end
+	else
+		msg = msg .. "\n⚠️ HandleがMeshPartまたはSpecialMesh付きPartではありません"
 	end
 
+	-- Discord通知 or ローカル出力
 	sendWebhook(msg)
+	print(msg)
 end
 
--- 起動時にペットを検出
-for _, obj in ipairs(workspace:GetChildren()) do
-	if obj:IsA("Model") and isTargetName(obj.Name) then
-		processPetModel(obj)
-	end
-end
-
--- 出現したときに最上位のペットモデルだけ通知
-workspace.ChildAdded:Connect(function(obj)
-	if obj:IsA("Model") and isTargetName(obj.Name) then
-		-- 少し待って MeshPart が追加されるのを待つ
-		task.delay(2, function()
-			processPetModel(obj)
-		end)
-	end
-end)
+-- 実行
+extractFromTool()
