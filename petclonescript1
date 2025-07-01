@@ -1,79 +1,62 @@
 local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
+local SOFT_BLACK = Color3.new(0.1, 0.1, 0.1)
 
-local SOFT_BLACK = Color3.fromRGB(25, 25, 25)
-local SMOKE_TEXTURE_ID = "rbxassetid://771221224"
-
--- 煙追加
-local function addCartoonSmoke(part)
-	if not part:FindFirstChild("CartoonSmoke") then
-		local emitter = Instance.new("ParticleEmitter")
-		emitter.Name = "CartoonSmoke"
-		emitter.Texture = SMOKE_TEXTURE_ID
-		emitter.Rate = 10
-		emitter.Lifetime = NumberRange.new(1.2, 1.5)
-		emitter.Speed = NumberRange.new(0.5, 1)
-		emitter.Size = NumberSequence.new(1, 2)
-		emitter.Transparency = NumberSequence.new(0.1, 1)
-		emitter.Color = ColorSequence.new(Color3.new(0.5, 0.5, 0.5))
-		emitter.LightInfluence = 0
-		emitter.RotSpeed = NumberRange.new(-30, 30)
-		emitter.Rotation = NumberRange.new(0, 360)
-		emitter.LockedToPart = true
-		emitter.Parent = part
+local function addSmokeToAnyPart(model)
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and not part:FindFirstChild("DragonSmoke") then
+			local smoke = Instance.new("Smoke")
+			smoke.Name = "DragonSmoke"
+			smoke.Color = Color3.new(0.5, 0.5, 0.5)
+			smoke.Opacity = 0.4
+			smoke.RiseVelocity = 2
+			smoke.Size = 4
+			smoke.Enabled = true
+			smoke.Parent = part
+			break
+		end
 	end
 end
 
--- Dragonの見た目変更
-local function styleDragonModel(model)
-	if not model or not model:IsA("Model") then return end
+local function isDragonModel(model)
+	if not model:IsA("Model") then return false end
+
+	local hasHead = false
+	local hasWing = false
+
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local name = part.Name:lower()
+			if name:find("head") then hasHead = true end
+			if name:find("wing") then hasWing = true end
+		end
+	end
+
+	return hasHead and hasWing
+end
+
+local function styleDragon(model)
+	if not isDragonModel(model) then return end
 
 	for _, part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Color = SOFT_BLACK
 		end
 	end
-
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name:lower():find("head") then
-			addCartoonSmoke(part)
-			break
-		end
-	end
+	addSmokeToAnyPart(model)
 end
 
--- Toolの中のModel取得も対応
-local function getActualModel(instance)
-	if instance:IsA("Tool") then
-		return instance:FindFirstChildWhichIsA("Model")
-	elseif instance:IsA("Model") then
-		return instance
-	end
-	return nil
-end
-
--- すでに存在しているDragonにも対応
+-- 初期に存在するモデルにも適用
 for _, obj in ipairs(Workspace:GetDescendants()) do
-	local model = getActualModel(obj)
-	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
-		styleDragonModel(model)
+	local model = obj:FindFirstAncestorWhichIsA("Model")
+	if model and isDragonModel(model) then
+		styleDragon(model)
 	end
 end
 
--- 新しく追加されたとき対応
-Workspace.ChildAdded:Connect(function(child)
-	task.wait(0.2)
-	local model = getActualModel(child)
-	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
-		styleDragonModel(model)
-	end
-end)
-
-Workspace.DescendantAdded:Connect(function(descendant)
-	local model = descendant:FindFirstAncestorWhichIsA("Model")
-	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
-		task.defer(function()
-			styleDragonModel(model)
-		end)
+-- 新たに追加されたときにも適用
+Workspace.DescendantAdded:Connect(function(desc)
+	local model = desc:FindFirstAncestorWhichIsA("Model")
+	if model and isDragonModel(model) then
+		styleDragon(model)
 	end
 end)
