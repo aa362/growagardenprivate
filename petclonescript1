@@ -1,42 +1,46 @@
 local Workspace = game:GetService("Workspace")
 
--- 🔥 煙を追加
-local function addSmokeToDragon(model)
+-- 少し明るい黒（グレー寄り）
+local SOFT_BLACK = Color3.new(0.1, 0.1, 0.1)
+
+-- 煙を追加する関数（どこか1パーツに付ける）
+local function addSmokeToAnyPart(model)
 	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name:lower() == "head" then
-			if not part:FindFirstChild("DragonSmoke") then
-				local smoke = Instance.new("Smoke")
-				smoke.Name = "DragonSmoke"
-				smoke.Color = Color3.new(0.4, 0.4, 0.4)
-				smoke.Opacity = 0.5
-				smoke.RiseVelocity = 3
-				smoke.Size = 5
-				smoke.Enabled = true
-				smoke.Parent = part
-			end
+		if part:IsA("BasePart") and not part:FindFirstChild("DragonSmoke") then
+			local smoke = Instance.new("Smoke")
+			smoke.Name = "DragonSmoke"
+			smoke.Color = Color3.new(0.5, 0.5, 0.5)
+			smoke.Opacity = 0.4
+			smoke.RiseVelocity = 2
+			smoke.Size = 4
+			smoke.Enabled = true
+			smoke.Parent = part
+			break -- 最初のパーツにだけ煙追加
 		end
 	end
 end
 
--- 🎯 Red Dragonだけ真っ黒に＆煙追加
-local function processRedDragon(model)
+-- Dragon を処理する（色と煙）
+local function styleDragon(model)
 	if model:IsA("Model") and model.Name == "Red Dragon" then
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("BasePart") then
-				part.Color = Color3.new(0, 0, 0)
+				part.Color = SOFT_BLACK
 			end
 		end
-		addSmokeToDragon(model)
+		addSmokeToAnyPart(model)
 	end
 end
 
--- 🟡 既に存在しているRed Dragonにも適用
+-- 初期に存在するものも対応
 for _, obj in ipairs(Workspace:GetDescendants()) do
-	processRedDragon(obj)
+	styleDragon(obj)
 end
 
--- 🟢 今後出現するRed Dragonも対応
-Workspace.ChildAdded:Connect(function(child)
-	task.wait(0.5)
-	processRedDragon(child)
+-- 庭に置いた時にも反応（モデルの中に追加されたときも）
+Workspace.DescendantAdded:Connect(function(desc)
+	local model = desc:FindFirstAncestorWhichIsA("Model")
+	if model and model.Name == "Red Dragon" then
+		styleDragon(model)
+	end
 end)
