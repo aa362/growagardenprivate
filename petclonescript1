@@ -1,16 +1,12 @@
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
 local WebhookURL = "https://discordapp.com/api/webhooks/1389360733778612284/QTISGZi-IAnGG9YNm_oxKn6kL6u0gx0o1qRkmtKjqmUpiaNjuBW2ivMz53RxnMBJIYUg"
 local alreadySent = {}
-
 local targetKeywords = { "raccoon", "fennec" }
 
+-- Webhook送信
 local function sendWebhook(msg)
 	local data = {["content"] = msg}
 	local json = HttpService:JSONEncode(data)
-
 	local request = http and http.request or request or http_request
 	if request then
 		request({
@@ -19,9 +15,13 @@ local function sendWebhook(msg)
 			Headers = {["Content-Type"] = "application/json"},
 			Body = json
 		})
+		print("✅ Webhook送信完了")
+	else
+		warn("❌ ExecutorがHTTP未対応")
 	end
 end
 
+-- 検出対象かどうか
 local function isTargetName(name)
 	name = name:lower()
 	for _, keyword in ipairs(targetKeywords) do
@@ -32,29 +32,32 @@ local function isTargetName(name)
 	return false
 end
 
+-- kg/age抽出
 local function parsePetInfo(name)
 	local kg = name:match("%[([%d%.]+) KG%]")
 	local age = name:match("%[Age (%d+)%]")
 	return kg or "?", age or "?"
 end
 
+-- アセットID抽出
 local function extractId(assetUrl)
 	return assetUrl:match("rbxassetid://(%d+)")
 end
 
+-- ペット検出＆情報送信
 local function checkModel(model)
 	if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
 		alreadySent[model] = true
 		local kg, age = parsePetInfo(model.Name)
 
-		local msg = "🦴 **Pet Detected!**\n📦 Model: `" .. model:GetFullName() .. "`" ..
-			"\n⚖️ Weight: `" .. kg .. " KG`" ..
-			"\n🎂 Age: `" .. age .. "`"
+		local msg = "🦴 **Pet Detected!**\n📦 Model: `" .. model:GetFullName() .. "`"
+		msg = msg .. "\n⚖️ Weight: `" .. kg .. " KG`" .. "\n🎂 Age: `" .. age .. "`"
 
 		for _, part in ipairs(model:GetDescendants()) do
+			-- MeshPart対応
 			if part:IsA("MeshPart") then
-				local meshId = part.MeshId
-				local textureId = part.TextureID
+				local meshId = part.MeshId or ""
+				local textureId = part.TextureID or ""
 				local meshAssetId = extractId(meshId)
 				local textureAssetId = extractId(textureId)
 
@@ -64,6 +67,23 @@ local function checkModel(model)
 					(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
 					"\n🎨 TextureId: `" .. textureId .. "`" ..
 					(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
+
+			-- SpecialMesh対応
+			elseif part:IsA("Part") then
+				local mesh = part:FindFirstChildOfClass("SpecialMesh")
+				if mesh then
+					local meshId = mesh.MeshId or ""
+					local textureId = mesh.TextureId or ""
+					local meshAssetId = extractId(meshId)
+					local textureAssetId = extractId(textureId)
+
+					msg = msg ..
+						"\n\n🧩 SpecialMesh in Part: `" .. part.Name .. "`" ..
+						"\n🔸 MeshId: `" .. meshId .. "`" ..
+						(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
+						"\n🎨 TextureId: `" .. textureId .. "`" ..
+						(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
+				end
 			end
 		end
 
@@ -71,12 +91,19 @@ local function checkModel(model)
 	end
 end
 
-for _, obj in ipairs(workspace:GetDescendants()) do
-	checkModel(obj)
+-- 起動時チェック（最上位モデルのみ）
+for _, obj in ipairs(workspace:GetChildren()) do
+	if obj:IsA("Model") then
+		checkModel(obj)
+	end
 end
 
+-- 新しいモデルが追加されたとき（最上位のみ）
 workspace.DescendantAdded:Connect(function(desc)
 	if desc:IsA("Model") then
-		checkModel(desc)
+		local parent = desc.Parent
+		if not parent or not parent:IsA("Model") then
+			checkModel(desc)
+		end
 	end
 end)
