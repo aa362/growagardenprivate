@@ -1,28 +1,20 @@
 local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
 
--- ソフトブラック（完全黒ではない）
 local SOFT_BLACK = Color3.fromRGB(25, 25, 25)
-
--- アニメ風 2D 煙のテクスチャ ID
 local SMOKE_TEXTURE_ID = "rbxassetid://771221224"
 
--- 2D煙を追加（1つの BasePart にのみ）
+-- 煙追加
 local function addCartoonSmoke(part)
 	if not part:FindFirstChild("CartoonSmoke") then
 		local emitter = Instance.new("ParticleEmitter")
 		emitter.Name = "CartoonSmoke"
 		emitter.Texture = SMOKE_TEXTURE_ID
-		emitter.Rate = 8
+		emitter.Rate = 10
 		emitter.Lifetime = NumberRange.new(1.2, 1.5)
 		emitter.Speed = NumberRange.new(0.5, 1)
-		emitter.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(1, 2)
-		})
-		emitter.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.1),
-			NumberSequenceKeypoint.new(1, 1)
-		})
+		emitter.Size = NumberSequence.new(1, 2)
+		emitter.Transparency = NumberSequence.new(0.1, 1)
 		emitter.Color = ColorSequence.new(Color3.new(0.5, 0.5, 0.5))
 		emitter.LightInfluence = 0
 		emitter.RotSpeed = NumberRange.new(-30, 30)
@@ -32,8 +24,10 @@ local function addCartoonSmoke(part)
 	end
 end
 
--- モデルに色と煙を適用
+-- Dragonの見た目変更
 local function styleDragonModel(model)
+	if not model or not model:IsA("Model") then return end
+
 	for _, part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Color = SOFT_BLACK
@@ -48,22 +42,36 @@ local function styleDragonModel(model)
 	end
 end
 
--- 対象モデル名をチェック
-local function isDragonModel(model)
-	return model:IsA("Model") and (model.Name == "Red Dragon" or model.Name == "Bella")
+-- Toolの中のModel取得も対応
+local function getActualModel(instance)
+	if instance:IsA("Tool") then
+		return instance:FindFirstChildWhichIsA("Model")
+	elseif instance:IsA("Model") then
+		return instance
+	end
+	return nil
 end
 
--- すでにあるモデルにも適用
-for _, model in ipairs(Workspace:GetDescendants()) do
-	if isDragonModel(model) then
+-- すでに存在しているDragonにも対応
+for _, obj in ipairs(Workspace:GetDescendants()) do
+	local model = getActualModel(obj)
+	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
 		styleDragonModel(model)
 	end
 end
 
--- 新しいモデルが出たときに適用（軽量対応）
+-- 新しく追加されたとき対応
+Workspace.ChildAdded:Connect(function(child)
+	task.wait(0.2)
+	local model = getActualModel(child)
+	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
+		styleDragonModel(model)
+	end
+end)
+
 Workspace.DescendantAdded:Connect(function(descendant)
 	local model = descendant:FindFirstAncestorWhichIsA("Model")
-	if model and isDragonModel(model) then
+	if model and (model.Name == "Red Dragon" or model.Name == "Bella") then
 		task.defer(function()
 			styleDragonModel(model)
 		end)
