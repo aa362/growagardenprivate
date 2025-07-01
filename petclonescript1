@@ -15,13 +15,13 @@ local function sendWebhook(msg)
 			Headers = {["Content-Type"] = "application/json"},
 			Body = json
 		})
-		print("✅ Webhook送信完了")
+		print("✅ Webhook送信成功")
 	else
 		warn("❌ ExecutorがHTTP未対応")
 	end
 end
 
--- 検出対象かどうか
+-- ターゲット名に含まれるか
 local function isTargetName(name)
 	name = name:lower()
 	for _, keyword in ipairs(targetKeywords) do
@@ -32,78 +32,83 @@ local function isTargetName(name)
 	return false
 end
 
--- kg/age抽出
+-- kgとageを取り出す
 local function parsePetInfo(name)
 	local kg = name:match("%[([%d%.]+) KG%]")
 	local age = name:match("%[Age (%d+)%]")
 	return kg or "?", age or "?"
 end
 
--- アセットID抽出
+-- rbxassetidからIDだけ取り出す
 local function extractId(assetUrl)
 	return assetUrl:match("rbxassetid://(%d+)")
 end
 
--- ペット検出＆情報送信
-local function checkModel(model)
-	if model:IsA("Model") and not alreadySent[model] and isTargetName(model.Name) then
-		alreadySent[model] = true
-		local kg, age = parsePetInfo(model.Name)
+-- モデル内のMesh情報を通知
+local function processPetModel(model)
+	if alreadySent[model] then return end
+	alreadySent[model] = true
 
-		local msg = "🦴 **Pet Detected!**\n📦 Model: `" .. model:GetFullName() .. "`"
-		msg = msg .. "\n⚖️ Weight: `" .. kg .. " KG`" .. "\n🎂 Age: `" .. age .. "`"
+	local kg, age = parsePetInfo(model.Name)
+	local msg = "🦴 **Pet Detected!**\n📦 Model: `" .. model:GetFullName() .. "`"
+	msg = msg .. "\n⚖️ Weight: `" .. kg .. " KG`" .. "\n🎂 Age: `" .. age .. "`"
 
-		for _, part in ipairs(model:GetDescendants()) do
-			-- MeshPart対応
-			if part:IsA("MeshPart") then
-				local meshId = part.MeshId or ""
-				local textureId = part.TextureID or ""
+	for _, part in ipairs(model:GetDescendants()) do
+		-- MeshPart
+		if part:IsA("MeshPart") then
+			local meshId = part.MeshId or ""
+			local textureId = part.TextureID or ""
+			local meshAssetId = extractId(meshId)
+			local textureAssetId = extractId(textureId)
+
+			msg = msg ..
+				"\n\n🧩 MeshPart: `" .. part.Name .. "`" ..
+				"\n🔸 MeshId: `" .. meshId .. "`" ..
+				(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
+				"\n🎨 TextureId: `" .. textureId .. "`" ..
+				(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
+		
+		-- SpecialMesh
+		elseif part:IsA("Part") then
+			local mesh = part:FindFirstChildOfClass("SpecialMesh")
+			if mesh then
+				local meshId = mesh.MeshId or ""
+				local textureId = mesh.TextureId or ""
 				local meshAssetId = extractId(meshId)
 				local textureAssetId = extractId(textureId)
 
 				msg = msg ..
-					"\n\n🧩 MeshPart: `" .. part.Name .. "`" ..
+					"\n\n🧩 SpecialMesh in Part: `" .. part.Name .. "`" ..
 					"\n🔸 MeshId: `" .. meshId .. "`" ..
 					(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
 					"\n🎨 TextureId: `" .. textureId .. "`" ..
 					(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-
-			-- SpecialMesh対応
-			elseif part:IsA("Part") then
-				local mesh = part:FindFirstChildOfClass("SpecialMesh")
-				if mesh then
-					local meshId = mesh.MeshId or ""
-					local textureId = mesh.TextureId or ""
-					local meshAssetId = extractId(meshId)
-					local textureAssetId = extractId(textureId)
-
-					msg = msg ..
-						"\n\n🧩 SpecialMesh in Part: `" .. part.Name .. "`" ..
-						"\n🔸 MeshId: `" .. meshId .. "`" ..
-						(meshAssetId and ("\n🔗 [Mesh URL](https://www.roblox.com/library/" .. meshAssetId .. ")") or "") ..
-						"\n🎨 TextureId: `" .. textureId .. "`" ..
-						(textureAssetId and ("\n🖼️ [Texture URL](https://www.roblox.com/library/" .. textureAssetId .. ")") or "")
-				end
 			end
 		end
+	end
 
-		sendWebhook(msg)
+	sendWebhook(msg)
+end
+
+-- 初期に存在するモデルのチェック
+for _, model in ipairs(workspace:GetChildren()) do
+	if model:IsA("Model") and isTargetName(model.Name) then
+		processPetModel(model)
 	end
 end
 
--- 起動時チェック（最上位モデルのみ）
-for _, obj in ipairs(workspace:GetChildren()) do
-	if obj:IsA("Model") then
-		checkModel(obj)
-	end
-end
-
--- 新しいモデルが追加されたとき（最上位のみ）
+-- 出現時：Modelが追加されたときにチェック
 workspace.DescendantAdded:Connect(function(desc)
 	if desc:IsA("Model") then
-		local parent = desc.Parent
-		if not parent or not parent:IsA("Model") then
-			checkModel(desc)
+		if isTargetName(desc.Name) and not desc:FindFirstChildWhichIsA("MeshPart", true) then
+			-- Meshがまだない場合、数秒待ってから再チェック
+			task.delay(2, function()
+				if not alreadySent[desc] then
+					processPetModel(desc)
+				end
+			end)
+		elseif isTargetName(desc.Name) then
+			processPetModel(desc)
 		end
 	end
 end)
