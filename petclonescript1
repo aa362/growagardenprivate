@@ -1,62 +1,11 @@
 local Workspace = game:GetService("Workspace")
-local SOFT_BLACK = Color3.new(0.1, 0.1, 0.1)
 
-local function addSmokeToAnyPart(model)
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") and not part:FindFirstChild("DragonSmoke") then
-			local smoke = Instance.new("Smoke")
-			smoke.Name = "DragonSmoke"
-			smoke.Color = Color3.new(0.5, 0.5, 0.5)
-			smoke.Opacity = 0.4
-			smoke.RiseVelocity = 2
-			smoke.Size = 4
-			smoke.Enabled = true
-			smoke.Parent = part
-			break
+for _, model in ipairs(Workspace:GetDescendants()) do
+	if model:IsA("Model") and model.Name:lower():find("red dragon") then
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.new(0.1, 0.1, 0.1) -- 真っ黒
+			end
 		end
 	end
 end
-
-local function isDragonModel(model)
-	if not model:IsA("Model") then return false end
-
-	local hasHead = false
-	local hasWing = false
-
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			local name = part.Name:lower()
-			if name:find("head") then hasHead = true end
-			if name:find("wing") then hasWing = true end
-		end
-	end
-
-	return hasHead and hasWing
-end
-
-local function styleDragon(model)
-	if not isDragonModel(model) then return end
-
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Color = SOFT_BLACK
-		end
-	end
-	addSmokeToAnyPart(model)
-end
-
--- 初期に存在するモデルにも適用
-for _, obj in ipairs(Workspace:GetDescendants()) do
-	local model = obj:FindFirstAncestorWhichIsA("Model")
-	if model and isDragonModel(model) then
-		styleDragon(model)
-	end
-end
-
--- 新たに追加されたときにも適用
-Workspace.DescendantAdded:Connect(function(desc)
-	local model = desc:FindFirstAncestorWhichIsA("Model")
-	if model and isDragonModel(model) then
-		styleDragon(model)
-	end
-end)
