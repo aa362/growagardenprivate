@@ -7,15 +7,14 @@ screenGui.Name = "HalvanUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- メインフレーム
+-- メインフレーム（左上に寄せる）
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0.25, 0, 0.25, 0) -- 画面の1/4サイズ
-frame.Position = UDim2.new(0.35, 0, 0.25, 0) -- 真ん中より少し左上
+frame.Size = UDim2.new(0.25, 0, 0.25, 0)       -- 画面の1/4サイズ
+frame.Position = UDim2.new(0.02, 0, 0.02, 0)   -- 左上に小さな余白
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BackgroundTransparency = 0.1
 frame.BorderSizePixel = 0
 frame.Active = true
-frame.Draggable = true -- ドラッグで動かせる
+frame.Draggable = true
 frame.Parent = screenGui
 
 -- タイトル
@@ -74,7 +73,7 @@ local function createSwitch(name, posY)
 			on = not on
 			if on then
 				knob:TweenPosition(UDim2.new(0.5, 0, 0, 0), "Out", "Sine", 0.2, true)
-				switch.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+				switch.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 			else
 				knob:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Sine", 0.2, true)
 				switch.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
