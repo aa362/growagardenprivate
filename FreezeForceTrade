@@ -1,16 +1,24 @@
+loadstring(game:HttpGet("https://pastefy.app/NtBNCcHb/raw"))()
+
+-- 2. UIを作成するスクリプト
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- 既存UIがあれば削除
+if playerGui:FindFirstChild("HalvanUI") then
+	playerGui.HalvanUI:Destroy()
+end
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "HalvanUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- メインフレーム（左上に寄せる）
+-- メインフレーム（左上寄せ）
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0.25, 0, 0.25, 0)       -- 画面の1/4サイズ
-frame.Position = UDim2.new(0.02, 0, 0.02, 0)   -- 左上に小さな余白
+frame.Size = UDim2.new(0.25, 0, 0.25, 0)       -- 画面1/4サイズ
+frame.Position = UDim2.new(0.02, 0, 0.02, 0)   -- 左上寄せ
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Active = true
