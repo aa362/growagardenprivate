@@ -11,14 +11,14 @@ screenGui.Parent = playerGui
 
 -- フレーム
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(0.5, -125, 0.5, -75)
+frame.Size = UDim2.new(0, 250, 0, 170)
+frame.Position = UDim2.new(0.5, -125, 0.5, -85)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Parent = screenGui
 
 -- タイトルラベル
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 20)
+title.Size = UDim2.new(1, 0, 0, 25)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "halvan script"
@@ -45,47 +45,53 @@ local function createToggle(parent, position, labelText)
 	label.TextScaled = true
 	label.Parent = container
 
-	-- トグルの背景
-	local toggleBG = Instance.new("Frame")
-	toggleBG.Size = UDim2.new(0.35, 0, 0.6, 0)
-	toggleBG.Position = UDim2.new(0.65, 0, 0.2, 0)
-	toggleBG.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤（OFF）
+	-- トグルの背景（横長で細め）
+	local toggleBG = Instance.new("TextButton")
+	toggleBG.Size = UDim2.new(0, 60, 0, 25)
+	toggleBG.Position = UDim2.new(0.75, 0, 0.25, 0)
+	toggleBG.BackgroundColor3 = Color3.fromRGB(150, 150, 150) -- グレー（OFF）
 	toggleBG.BorderSizePixel = 0
+	toggleBG.AutoButtonColor = false
 	toggleBG.Parent = container
-	toggleBG.CornerRadius = UDim.new(1, 0)
 
-	-- 丸いスライダー
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = toggleBG
+
+	-- 丸いノブ
 	local knob = Instance.new("Frame")
-	knob.Size = UDim2.new(0.5, 0, 1, 0)
-	knob.Position = UDim2.new(0, 0, 0, 0)
+	knob.Size = UDim2.new(0, 23, 0, 23)
+	knob.Position = UDim2.new(0, 1, 0, 1) -- 左側（OFF）
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	knob.Parent = toggleBG
 	knob.BorderSizePixel = 0
-	knob.CornerRadius = UDim.new(1, 0)
+
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
 
 	-- 状態
 	local isOn = false
 
-	-- クリックで切り替え
-	toggleBG.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			isOn = not isOn
+	-- 切り替え処理
+	toggleBG.MouseButton1Click:Connect(function()
+		isOn = not isOn
 
-			-- Tweenの設定
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Position = isOn and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-			})
-			local colorTween = TweenService:Create(toggleBG, TweenInfo.new(0.2), {
-				BackgroundColor3 = isOn and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
-			})
+		-- ノブの移動
+		local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = isOn and UDim2.new(1, -24, 0, 1) or UDim2.new(0, 1, 0, 1)
+		})
+		-- 背景色の変更
+		local colorTween = TweenService:Create(toggleBG, TweenInfo.new(0.2), {
+			BackgroundColor3 = isOn and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(150, 150, 150)
+		})
 
-			-- 実行
-			knobTween:Play()
-			colorTween:Play()
-		end
+		-- 実行
+		knobTween:Play()
+		colorTween:Play()
 	end)
 end
 
--- 2つ作成（タイトルの下から配置）
-createToggle(frame, UDim2.new(0, 10, 0, 30), "Trade Freeze")
-createToggle(frame, UDim2.new(0, 10, 0, 90), "Force Accept")
+-- 2つ作成
+createToggle(frame, UDim2.new(0, 10, 0, 35), "Trade Freeze")
+createToggle(frame, UDim2.new(0, 10, 0, 95), "Force Accept")
