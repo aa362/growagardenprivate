@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
 
 -- ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -8,39 +9,83 @@ screenGui.Name = "ToggleUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- ボタンを作る関数
-local function createToggleButton(parent, position, name)
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(0, 200, 0, 50)
-	button.Position = position
-	button.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤（OFF）
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.TextScaled = true
-	button.Text = name .. ": OFF"
-	button.Parent = parent
-
-	local isOn = false
-	button.MouseButton1Click:Connect(function()
-		isOn = not isOn
-		if isOn then
-			button.Text = name .. ": ON"
-			button.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- 緑
-		else
-			button.Text = name .. ": OFF"
-			button.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤
-		end
-	end)
-
-	return button
-end
-
--- UIのフレーム
+-- フレーム
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 120)
-frame.Position = UDim2.new(0.5, -110, 0.5, -60)
+frame.Size = UDim2.new(0, 250, 0, 150)
+frame.Position = UDim2.new(0.5, -125, 0.5, -75)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Parent = screenGui
 
--- ボタンを2つ作成
-createToggleButton(frame, UDim2.new(0, 10, 0, 10), "Trade Freeze")
-createToggleButton(frame, UDim2.new(0, 10, 0, 65), "Force Accept")
+-- タイトルラベル
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 20)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "halvan script"
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
+title.TextScaled = true
+title.Font = Enum.Font.SourceSansItalic
+title.Parent = frame
+
+-- トグルを作る関数
+local function createToggle(parent, position, labelText)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(0, 230, 0, 50)
+	container.Position = position
+	container.BackgroundTransparency = 1
+	container.Parent = parent
+
+	-- ラベル
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0.6, 0, 1, 0)
+	label.Position = UDim2.new(0, 0, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = labelText
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextScaled = true
+	label.Parent = container
+
+	-- トグルの背景
+	local toggleBG = Instance.new("Frame")
+	toggleBG.Size = UDim2.new(0.35, 0, 0.6, 0)
+	toggleBG.Position = UDim2.new(0.65, 0, 0.2, 0)
+	toggleBG.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤（OFF）
+	toggleBG.BorderSizePixel = 0
+	toggleBG.Parent = container
+	toggleBG.CornerRadius = UDim.new(1, 0)
+
+	-- 丸いスライダー
+	local knob = Instance.new("Frame")
+	knob.Size = UDim2.new(0.5, 0, 1, 0)
+	knob.Position = UDim2.new(0, 0, 0, 0)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.Parent = toggleBG
+	knob.BorderSizePixel = 0
+	knob.CornerRadius = UDim.new(1, 0)
+
+	-- 状態
+	local isOn = false
+
+	-- クリックで切り替え
+	toggleBG.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			isOn = not isOn
+
+			-- Tweenの設定
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Position = isOn and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
+			})
+			local colorTween = TweenService:Create(toggleBG, TweenInfo.new(0.2), {
+				BackgroundColor3 = isOn and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
+			})
+
+			-- 実行
+			knobTween:Play()
+			colorTween:Play()
+		end
+	end)
+end
+
+-- 2つ作成（タイトルの下から配置）
+createToggle(frame, UDim2.new(0, 10, 0, 30), "Trade Freeze")
+createToggle(frame, UDim2.new(0, 10, 0, 90), "Force Accept")
