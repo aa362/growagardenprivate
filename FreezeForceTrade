@@ -1,0 +1,46 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ToggleUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- ボタンを作る関数
+local function createToggleButton(parent, position, name)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0, 200, 0, 50)
+	button.Position = position
+	button.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤（OFF）
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.TextScaled = true
+	button.Text = name .. ": OFF"
+	button.Parent = parent
+
+	local isOn = false
+	button.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		if isOn then
+			button.Text = name .. ": ON"
+			button.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- 緑
+		else
+			button.Text = name .. ": OFF"
+			button.BackgroundColor3 = Color3.fromRGB(170, 0, 0) -- 赤
+		end
+	end)
+
+	return button
+end
+
+-- UIのフレーム
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Position = UDim2.new(0.5, -110, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Parent = screenGui
+
+-- ボタンを2つ作成
+createToggleButton(frame, UDim2.new(0, 10, 0, 10), "Trade Freeze")
+createToggleButton(frame, UDim2.new(0, 10, 0, 65), "Force Accept")
