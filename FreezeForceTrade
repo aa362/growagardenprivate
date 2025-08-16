@@ -2,142 +2,87 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 既存UIを消す（リロード対策）
-if playerGui:FindFirstChild("HalvanUI") then
-	playerGui.HalvanUI:Destroy()
-end
-
--- メインUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "HalvanUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- メインフレーム（左上の1/4サイズ）
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0.25, 0, 0.25, 0) -- 画面の4分の1
-mainFrame.Position = UDim2.new(0, 0, 0, 0)   -- 左上に配置
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true -- モバイルでもドラッグ可能
-mainFrame.Parent = screenGui
+-- メインフレーム
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.25, 0, 0.25, 0) -- 画面の1/4サイズ
+frame.Position = UDim2.new(0.35, 0, 0.25, 0) -- 真ん中より少し左上
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundTransparency = 0.1
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true -- ドラッグで動かせる
+frame.Parent = screenGui
 
 -- タイトル
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 20)
+title.Size = UDim2.new(1, 0, 0.15, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "halvan script"
-title.TextColor3 = Color3.fromRGB(180, 180, 180)
-title.TextSize = 14
-title.Font = Enum.Font.SourceSansItalic
-title.Parent = mainFrame
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
+title.TextScaled = true
+title.Font = Enum.Font.Gotham
+title.Parent = frame
 
 -- スイッチ作成関数
 local function createSwitch(name, posY)
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0.9, 0, 0, 40)
-	frame.Position = UDim2.new(0.05, 0, 0, posY)
-	frame.BackgroundTransparency = 1
-	frame.Parent = mainFrame
+	local holder = Instance.new("Frame")
+	holder.Size = UDim2.new(0.8, 0, 0.25, 0)
+	holder.Position = UDim2.new(0.1, 0, posY, 0)
+	holder.BackgroundTransparency = 1
+	holder.Parent = frame
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0.6, 0, 1, 0)
 	label.BackgroundTransparency = 1
 	label.Text = name
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	label.TextSize = 16
-	label.Font = Enum.Font.SourceSans
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = frame
+	label.TextScaled = true
+	label.Font = Enum.Font.Gotham
+	label.Parent = holder
 
 	local switch = Instance.new("Frame")
-	switch.Size = UDim2.new(0, 50, 0, 25)
-	switch.Position = UDim2.new(0.7, 0, 0.2, 0)
-	switch.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+	switch.Size = UDim2.new(0.3, 0, 0.6, 0)
+	switch.Position = UDim2.new(0.65, 0, 0.2, 0)
+	switch.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 	switch.BorderSizePixel = 0
-	switch.Parent = frame
+	switch.Parent = holder
 
 	local knob = Instance.new("Frame")
-	knob.Size = UDim2.new(0, 23, 0, 23)
-	knob.Position = UDim2.new(0, 1, 0, 1)
-	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.Size = UDim2.new(0.5, 0, 1, 0)
+	knob.Position = UDim2.new(0, 0, 0, 0)
+	knob.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
 	knob.BorderSizePixel = 0
 	knob.Parent = switch
 
-	local uiCorner = Instance.new("UICorner", switch)
-	uiCorner.CornerRadius = UDim.new(0, 15)
-	local knobCorner = Instance.new("UICorner", knob)
-	knobCorner.CornerRadius = UDim.new(0, 15)
+	local uiCorner1 = Instance.new("UICorner")
+	uiCorner1.CornerRadius = UDim.new(0, 20)
+	uiCorner1.Parent = switch
+
+	local uiCorner2 = Instance.new("UICorner")
+	uiCorner2.CornerRadius = UDim.new(0, 20)
+	uiCorner2.Parent = knob
 
 	local on = false
-
 	switch.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-		   input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			on = not on
 			if on then
-				switch.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-				knob:TweenPosition(UDim2.new(1, -24, 0, 1), "Out", "Sine", 0.2, true)
+				knob:TweenPosition(UDim2.new(0.5, 0, 0, 0), "Out", "Sine", 0.2, true)
+				switch.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
 			else
-				switch.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-				knob:TweenPosition(UDim2.new(0, 1, 0, 1), "Out", "Sine", 0.2, true)
+				knob:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Sine", 0.2, true)
+				switch.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 			end
 		end
 	end)
 end
 
--- スイッチ追加
-createSwitch("Trade Freeze", 30)
-createSwitch("Force Accept", 80)
-
-
-	-- トグルの背景（iPhone風）
-	local toggleBG = Instance.new("TextButton")
-	toggleBG.Size = UDim2.new(0, 60, 0, 25)
-	toggleBG.Position = UDim2.new(0.75, 0, 0.25, 0)
-	toggleBG.BackgroundColor3 = Color3.fromRGB(150, 150, 150) -- グレー（OFF）
-	toggleBG.BorderSizePixel = 0
-	toggleBG.AutoButtonColor = false
-	toggleBG.Parent = container
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = toggleBG
-
-	-- 丸いノブ
-	local knob = Instance.new("Frame")
-	knob.Size = UDim2.new(0, 23, 0, 23)
-	knob.Position = UDim2.new(0, 1, 0, 1) -- 左側（OFF）
-	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	knob.Parent = toggleBG
-	knob.BorderSizePixel = 0
-
-	local knobCorner = Instance.new("UICorner")
-	knobCorner.CornerRadius = UDim.new(1, 0)
-	knobCorner.Parent = knob
-
-	-- 状態
-	local isOn = false
-
-	-- 切り替え処理
-	toggleBG.MouseButton1Click:Connect(function()
-		isOn = not isOn
-
-		-- ノブの移動
-		local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = isOn and UDim2.new(1, -24, 0, 1) or UDim2.new(0, 1, 0, 1)
-		})
-		-- 背景色の変更
-		local colorTween = TweenService:Create(toggleBG, TweenInfo.new(0.2), {
-			BackgroundColor3 = isOn and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(150, 150, 150)
-		})
-
-		knobTween:Play()
-		colorTween:Play()
-	end)
-end
-
--- 2つ作成
-createToggle(frame, UDim2.new(0, 10, 0, 35), "Trade Freeze")
-createToggle(frame, UDim2.new(0, 10, 0, 95), "Force Accept")
+-- スイッチを追加
+createSwitch("Trade Freeze", 0.25)
+createSwitch("Force Accept", 0.55)
