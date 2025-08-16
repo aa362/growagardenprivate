@@ -1,53 +1,96 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
-local TweenService = game:GetService("TweenService")
 
--- ScreenGui
+-- 既存UIを消す（リロード対策）
+if playerGui:FindFirstChild("HalvanUI") then
+	playerGui.HalvanUI:Destroy()
+end
+
+-- メインUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ToggleUI"
+screenGui.Name = "HalvanUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- フレーム
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 170)
-frame.Position = UDim2.new(0.5, -125, 0.5, -85)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.Parent = screenGui
+-- メインフレーム（左上の1/4サイズ）
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0.25, 0, 0.25, 0) -- 画面の4分の1
+mainFrame.Position = UDim2.new(0, 0, 0, 0)   -- 左上に配置
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true -- モバイルでもドラッグ可能
+mainFrame.Parent = screenGui
 
--- 🔹 この2行を追加するだけで動かせるようになる
-frame.Active = true
-frame.Draggable = true
-
--- タイトルラベル
+-- タイトル
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 25)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 20)
 title.BackgroundTransparency = 1
 title.Text = "halvan script"
-title.TextColor3 = Color3.fromRGB(200, 200, 200)
-title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(180, 180, 180)
+title.TextSize = 14
 title.Font = Enum.Font.SourceSansItalic
-title.Parent = frame
+title.Parent = mainFrame
 
--- トグルを作る関数
-local function createToggle(parent, position, labelText)
-	local container = Instance.new("Frame")
-	container.Size = UDim2.new(0, 230, 0, 50)
-	container.Position = position
-	container.BackgroundTransparency = 1
-	container.Parent = parent
+-- スイッチ作成関数
+local function createSwitch(name, posY)
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0.9, 0, 0, 40)
+	frame.Position = UDim2.new(0.05, 0, 0, posY)
+	frame.BackgroundTransparency = 1
+	frame.Parent = mainFrame
 
-	-- ラベル
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0.6, 0, 1, 0)
-	label.Position = UDim2.new(0, 0, 0, 0)
 	label.BackgroundTransparency = 1
-	label.Text = labelText
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextScaled = true
-	label.Parent = container
+	label.Text = name
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextSize = 16
+	label.Font = Enum.Font.SourceSans
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = frame
+
+	local switch = Instance.new("Frame")
+	switch.Size = UDim2.new(0, 50, 0, 25)
+	switch.Position = UDim2.new(0.7, 0, 0.2, 0)
+	switch.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+	switch.BorderSizePixel = 0
+	switch.Parent = frame
+
+	local knob = Instance.new("Frame")
+	knob.Size = UDim2.new(0, 23, 0, 23)
+	knob.Position = UDim2.new(0, 1, 0, 1)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.BorderSizePixel = 0
+	knob.Parent = switch
+
+	local uiCorner = Instance.new("UICorner", switch)
+	uiCorner.CornerRadius = UDim.new(0, 15)
+	local knobCorner = Instance.new("UICorner", knob)
+	knobCorner.CornerRadius = UDim.new(0, 15)
+
+	local on = false
+
+	switch.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+		   input.UserInputType == Enum.UserInputType.Touch then
+			on = not on
+			if on then
+				switch.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+				knob:TweenPosition(UDim2.new(1, -24, 0, 1), "Out", "Sine", 0.2, true)
+			else
+				switch.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+				knob:TweenPosition(UDim2.new(0, 1, 0, 1), "Out", "Sine", 0.2, true)
+			end
+		end
+	end)
+end
+
+-- スイッチ追加
+createSwitch("Trade Freeze", 30)
+createSwitch("Force Accept", 80)
+
 
 	-- トグルの背景（iPhone風）
 	local toggleBG = Instance.new("TextButton")
